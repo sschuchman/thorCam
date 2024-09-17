@@ -24,7 +24,7 @@ git push --set-upstream origin --all
 - Pico Controller
     - Takes in input of direction to drive the camera actuation
     - Takes in sensor data from tension modules to maintain proper control wire tension
-    - Drives steppor motors for tension wire control
+    - Drives stepper motors for tension wire control
 
 - Tension Module
     - Reads control wire tension via pressure sensor
@@ -34,7 +34,7 @@ git push --set-upstream origin --all
     - Tension module provides analog data on pressure sensor, as well as target tension by means of analog voltage
 
 # Pico Controller
-The Pico Controller is designed to serve as the abstration layer between the computer vision element and the camera actuation control. This is intended to simplify the project by containerizing the physical movement and control of the camera into a simple to interface.
+The Pico Controller is designed to serve as the abstraction layer between the computer vision element and the camera actuation control. This is intended to simplify the project by containerizing the physical movement and control of the camera into a simple to interface.
 
 The Pico Controller is configured to handle camera actuation by control of the stepper motor wires, as well as receive data from the tension modules to adjust the control wires to maintain proper balance.
 
