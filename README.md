@@ -2,7 +2,9 @@
 
 # Contributors
 Sean Schuchman: January 2024 - Present
+
 Jakob Schoeberle: August 2024 - Present
+
 Colton Wall: August 2024 - Present
 
 # Hardware
