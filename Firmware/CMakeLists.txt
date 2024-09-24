@@ -35,6 +35,7 @@ add_executable(thor-freertos
     main.c
     hx711.c
     l293d.c
+    shift_register.c
     FreeRTOS-Kernel/portable/MemMang/heap_4.c
     FreeRTOS-Kernel/portable/GCC/ARM_CM0/port.c
     FreeRTOS-Kernel/portable/GCC/ARM_CM0/portasm.c
@@ -57,6 +58,8 @@ pico_enable_stdio_usb(thor-freertos 0)
 # Add the standard library to the build
 target_link_libraries(thor-freertos
     pico_stdlib
+    hardware_i2c
+    pico_multicore
 )
 
 # Add the standard include files to the build

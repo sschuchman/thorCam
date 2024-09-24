@@ -41,7 +41,7 @@ void l293d_step_forward(l293d_t *motor, uint32_t speed_delay_us, uint32_t steps)
         sleep_us(speed_delay_us); // Adjust speed by changing this delay
     }
 
-    //l298n_stop(motor);
+    l293d_stop(motor);
 }
 
 // Step the motor backward with adjustable speed and distance using microstepping
@@ -55,7 +55,7 @@ void l293d_step_backward(l293d_t *motor, uint32_t speed_delay_us, uint32_t steps
         sleep_us(speed_delay_us); // Adjust speed by changing this delay
     }
 
-    //l298n_stop(motor);
+    l293d_stop(motor);
 }
 
 // Stop the motor
