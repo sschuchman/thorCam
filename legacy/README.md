@@ -2,7 +2,7 @@
 ## URCA
 
 # Contributors
-Sean Schuchman: January 2024 - Present
+Sean Schuchman: January 2024 - July 2024
 
 # Setup
 
