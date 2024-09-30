@@ -3,7 +3,11 @@
 	(generator "eeschema")
 	(generator_version "8.0")
 	(uuid "db81b714-3953-4d44-aa2d-c27f1ae157cd")
-	(paper "A4")
+	(paper "USLetter")
+	(title_block
+		(title "ThorPCB2.0")
+		(company "ECE 405 -SIUE")
+	)
 	(lib_symbols
 		(symbol "Device:C"
 			(pin_numbers hide)
