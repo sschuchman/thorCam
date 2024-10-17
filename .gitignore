@@ -30,3 +30,6 @@ fp-info-cache
 
 # Maybe Mac thing
 *.DS_Store
+
+#Don't include this
+Hardware/ThorPCB.zip
