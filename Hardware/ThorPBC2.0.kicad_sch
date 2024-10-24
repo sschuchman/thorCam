@@ -2389,16 +2389,16 @@
 		(uuid "2515246c-ad63-4330-b6af-fb2208975094")
 	)
 	(no_connect
-		(at 114.3 113.03)
-		(uuid "283faa93-526e-401f-9b78-95783c45f782")
-	)
-	(no_connect
 		(at 85.09 167.64)
 		(uuid "2d890d24-91ec-4179-935b-e01b9a52ce0c")
 	)
 	(no_connect
 		(at 102.87 34.29)
 		(uuid "42acd311-0d2e-4038-a2de-ae15830f6648")
+	)
+	(no_connect
+		(at 114.3 110.49)
+		(uuid "49c9fb66-6854-4d3f-8631-e6e903aa980c")
 	)
 	(no_connect
 		(at 114.3 135.89)
@@ -2841,6 +2841,16 @@
 			(type default)
 		)
 		(uuid "17f3407c-d553-48a0-b467-fd170e385a47")
+	)
+	(wire
+		(pts
+			(xy 118.11 113.03) (xy 105.41 113.03)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "18ab3f9c-aa79-4f4a-9739-7d25a7f2fe5e")
 	)
 	(bus
 		(pts
@@ -3344,6 +3354,16 @@
 	)
 	(wire
 		(pts
+			(xy 105.41 110.49) (xy 114.3 110.49)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "7be84694-b24b-43fb-83fe-7a111ce3f345")
+	)
+	(wire
+		(pts
 			(xy 64.77 172.72) (xy 110.49 172.72)
 		)
 		(stroke
@@ -3594,16 +3614,6 @@
 	)
 	(wire
 		(pts
-			(xy 118.11 106.68) (xy 118.11 110.49)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "aea7b594-81c2-42a8-b3b9-26949e7241d2")
-	)
-	(wire
-		(pts
 			(xy 247.65 120.65) (xy 247.65 124.46)
 		)
 		(stroke
@@ -3621,6 +3631,16 @@
 			(type default)
 		)
 		(uuid "afb669d2-f578-4402-96ee-5e32fc724786")
+	)
+	(wire
+		(pts
+			(xy 118.11 106.68) (xy 118.11 113.03)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "b042c77a-c188-4e85-ae72-fbf5f4689797")
 	)
 	(wire
 		(pts
@@ -3694,16 +3714,6 @@
 	)
 	(wire
 		(pts
-			(xy 105.41 110.49) (xy 118.11 110.49)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "bbd6760d-63ef-475f-966c-4842da97182d")
-	)
-	(wire
-		(pts
 			(xy 30.48 53.34) (xy 34.29 53.34)
 		)
 		(stroke
@@ -3761,16 +3771,6 @@
 			(type default)
 		)
 		(uuid "cef097b9-0972-4f26-a1b6-c33476a1ceb5")
-	)
-	(wire
-		(pts
-			(xy 105.41 113.03) (xy 114.3 113.03)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "d00717a6-e358-45c4-bbd9-2655a1d20cf8")
 	)
 	(wire
 		(pts
@@ -5313,7 +5313,7 @@
 				)
 			)
 		)
-		(property "Footprint" "Connector_Molex:Molex_Mini-Fit_Jr_5566-24A_2x12_P4.20mm_Vertical"
+		(property "Footprint" "ThorParts:Molex_Mini-Fit_Jr_5566-24A_2x12_P4.20mm_Vertical_Thor"
 			(at 82.55 46.99 0)
 			(effects
 				(font
