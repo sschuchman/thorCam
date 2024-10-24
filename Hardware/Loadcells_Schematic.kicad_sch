@@ -4511,7 +4511,7 @@
 				(justify left)
 			)
 		)
-		(property "Value" "Screw_Terminal_01x04"
+		(property "Value" "LoadCell_2"
 			(at 240.03 69.8499 0)
 			(effects
 				(font
@@ -4866,7 +4866,7 @@
 		(unit 1)
 		(exclude_from_sim no)
 		(in_bom yes)
-		(on_board yes)
+		(on_board no)
 		(dnp no)
 		(fields_autoplaced yes)
 		(uuid "71ec2cff-98ca-40e2-a284-a4085808b72b")
@@ -5229,7 +5229,7 @@
 				(justify left)
 			)
 		)
-		(property "Value" "Conn_01x10_Socket"
+		(property "Value" "ADS1115_Module_1"
 			(at 71.12 139.6999 0)
 			(effects
 				(font
@@ -5238,7 +5238,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" "Connector_PinHeader_2.54mm:PinHeader_1x10_P2.54mm_Vertical"
+		(property "Footprint" "ThorParts:ADS1115_1x10_P2.54mm_Vertical"
 			(at 69.85 137.16 0)
 			(effects
 				(font
@@ -5665,7 +5665,7 @@
 				(justify left)
 			)
 		)
-		(property "Value" "Screw_Terminal_01x04"
+		(property "Value" "LoadCell_0"
 			(at 240.03 43.1799 0)
 			(effects
 				(font
@@ -5741,7 +5741,7 @@
 				(justify left)
 			)
 		)
-		(property "Value" "Screw_Terminal_01x04"
+		(property "Value" "LoadCell_3"
 			(at 240.03 83.8199 0)
 			(effects
 				(font
@@ -6020,7 +6020,7 @@
 				(justify left)
 			)
 		)
-		(property "Value" "Conn_01x10_Socket"
+		(property "Value" "ADS1115_Module_0"
 			(at 71.12 170.1799 0)
 			(effects
 				(font
@@ -6029,7 +6029,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" "Connector_PinHeader_2.54mm:PinHeader_1x10_P2.54mm_Vertical"
+		(property "Footprint" "ThorParts:ADS1115_1x10_P2.54mm_Vertical"
 			(at 69.85 167.64 0)
 			(effects
 				(font
@@ -6186,7 +6186,7 @@
 				(justify left)
 			)
 		)
-		(property "Value" "Screw_Terminal_01x04"
+		(property "Value" "LoadCell_1"
 			(at 240.03 55.8799 0)
 			(effects
 				(font

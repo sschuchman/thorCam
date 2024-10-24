@@ -2986,7 +2986,7 @@
 				(justify left)
 			)
 		)
-		(property "Value" "Stepper_Motor_bipolar"
+		(property "Value" "Stepper_Motor"
 			(at 181.61 95.669 0)
 			(effects
 				(font
