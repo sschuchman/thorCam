@@ -268,4 +268,15 @@
 		(remove_unused_layers no)
 		(uuid "d085d3db-abc6-4a5a-bea3-72f1d46624af")
 	)
+	(model "${KIPRJMOD}/ThorParts/3D Models/C320C104K5R5TA.step"
+		(offset
+			(xyz 1.25 0 0)
+		)
+		(scale
+			(xyz 1 1 1)
+		)
+		(rotate
+			(xyz -90 0 0)
+		)
+	)
 )
