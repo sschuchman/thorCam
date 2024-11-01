@@ -33,3 +33,6 @@ fp-info-cache
 
 #Don't include this
 Hardware/ThorPCB.zip
+
+Hardware/production/backups/
+
