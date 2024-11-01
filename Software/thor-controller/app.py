@@ -212,6 +212,27 @@ def update_contour_area():
     MIN_CONTOUR_AREA = int(data['min_contour_area'])
     return jsonify(success=True)
 
+# New routes for movement controls
+@app.route('/move_up', methods=['POST'])
+def move_up():
+    ser.write(b'MOVE_UP\n')
+    return jsonify(success=True, action="MOVE_UP")
+
+@app.route('/move_down', methods=['POST'])
+def move_down():
+    ser.write(b'MOVE_DOWN\n')
+    return jsonify(success=True, action="MOVE_DOWN")
+
+@app.route('/move_left', methods=['POST'])
+def move_left():
+    ser.write(b'MOVE_LEFT\n')
+    return jsonify(success=True, action="MOVE_LEFT")
+
+@app.route('/move_right', methods=['POST'])
+def move_right():
+    ser.write(b'MOVE_RIGHT\n')
+    return jsonify(success=True, action="MOVE_RIGHT")
+
 if __name__ == '__main__':
     print("Starting Flask server on port 5000")
     app.run(host='0.0.0.0', port=5000)
