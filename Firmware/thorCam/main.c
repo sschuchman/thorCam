@@ -13,24 +13,26 @@
 // #define LOAD_2_SCK 27  // GPIO pin for HX711 SCK
 
 #define STEPPER0_PIN1 10
-#define STEPPER0_PIN2 11
-#define STEPPER0_PIN3 12
+#define STEPPER0_PIN2 12
+#define STEPPER0_PIN3 11
 #define STEPPER0_PIN4 13
 
 #define STEPPER1_PIN1 14
-#define STEPPER1_PIN2 15
-#define STEPPER1_PIN3 16
+#define STEPPER1_PIN2 16
+#define STEPPER1_PIN3 15
 #define STEPPER1_PIN4 17
 
 #define STEPPER2_PIN1 18
-#define STEPPER2_PIN2 19
-#define STEPPER2_PIN3 20
+#define STEPPER2_PIN2 20
+#define STEPPER2_PIN3 19
 #define STEPPER2_PIN4 21
 
 #define STEPPER3_PIN1 22
-#define STEPPER3_PIN2 26
-#define STEPPER3_PIN3 27
+#define STEPPER3_PIN2 27
+#define STEPPER3_PIN3 26
 #define STEPPER3_PIN4 28
+
+#define ONBOARD_LED 25
 
 #define NUM_STEPPERS 4
 
@@ -45,18 +47,21 @@ ads1115_t adc1, adc2;
 int16_t diff_0_1_adc1, diff_2_3_adc1, diff_0_1_adc2, diff_2_3_adc2;
 
 #define TENSION_HARD_UPPER_LIMIT 300
-#define TENSION_UPPER_LIMIT 60
-// #define TENSION_OPTIMAL 90
-#define TENSION_LOWER_LIMIT 20
+#define TENSION_UPPER_LIMIT 260
+#define TENSION_OPTIMAL 100
+#define TENSION_LOWER_LIMIT 10
 
 #define false 0
 #define true 1
 
 volatile bool mutex = false;
 volatile bool stop_flag = false;
-int16_t diff_array[4] = {0, 0, 0, 0};
+int16_t sensor_values[4] = {0, 0, 0, 0};
 
 int8_t vector[] = {1, 1, 1, 1};
+
+#define REVERSE_DELAY 1000
+#define FORWARD_DELAY 1000
 
 void setup_steppers()
 {
@@ -94,30 +99,37 @@ void read_ads111_task()
 
         // Set mutex
         mutex = true;
+        // Turn on ONBOARD LED
+        gpio_put(ONBOARD_LED, 1);
 
         // Update diff_array
-        diff_array[0] = diff_0_1_adc1;
-        diff_array[1] = diff_2_3_adc1;
-        diff_array[2] = diff_0_1_adc2;
-        diff_array[3] = diff_2_3_adc2;
+        sensor_values[0] = (diff_0_1_adc1 > 0) ? diff_0_1_adc1 : 0;
+        sensor_values[1] = (diff_2_3_adc1 > 0) ? diff_2_3_adc1 : 0;
+        sensor_values[2] = (diff_0_1_adc2 > 0) ? diff_0_1_adc2 : 0;
+        sensor_values[3] = (diff_2_3_adc2 > 0) ? diff_2_3_adc2 : 0;
 
         // Release mutex
         mutex = false;
 
-        sleep_ms(10);
+        // Turn off ONBOARD LED
+        gpio_put(ONBOARD_LED, 0);
 
-        char command[100];
+        printf("Load[%d, %d, %d, %d]\n", sensor_values[0], sensor_values[1], sensor_values[2], sensor_values[3]);
 
-        if (fgets(command, sizeof(command), stdin) != NULL)
-        {
-            // Remove newline character if present
-            command[strcspn(command, "\n")] = 0;
-            if (strcmp(command, "stop") == 0)
-            {
-                stop_flag = true;
-                break;
-            }
-        }
+        sleep_ms(100);
+
+        // char command[100];
+
+        // if (fgets(command, sizeof(command), stdin) != NULL)
+        // {
+        //     // Remove newline character if present
+        //     command[strcspn(command, "\n")] = 0;
+        //     if (strcmp(command, "stop") == 0)
+        //     {
+        //         stop_flag = true;
+        //         break;
+        //     }
+        // }
     }
 }
 
@@ -136,6 +148,7 @@ void calibrate()
     printf("Calibrating stepper 0...\n");
     // Unwind stepper0
     l293d_step_backward(&stepper0, unwinding_delay, unwinding_steps);
+    sleep_ms(1000);
 
     // Calibrate the ADS1115s
     ads1115_calibrate_0_1(&adc1);
@@ -153,6 +166,7 @@ void calibrate()
     printf("Calibrating stepper 1...\n");
     // Unwind stepper1
     l293d_step_backward(&stepper1, unwinding_delay, unwinding_steps);
+    sleep_ms(1000);
 
     // Calibrate the ADS1115s
     ads1115_calibrate_2_3(&adc1);
@@ -170,6 +184,7 @@ void calibrate()
     printf("Calibrating stepper 2...\n");
     // Unwind stepper2
     l293d_step_backward(&stepper2, unwinding_delay, unwinding_steps);
+    sleep_ms(1000);
 
     // Calibrate the ADS1115s
     ads1115_calibrate_0_1(&adc2);
@@ -187,6 +202,7 @@ void calibrate()
     printf("Calibrating stepper 3...\n");
     // Unwind stepper3
     l293d_step_backward(&stepper3, unwinding_delay, unwinding_steps);
+    sleep_ms(1000);
 
     // Calibrate the ADS1115s
     ads1115_calibrate_2_3(&adc2);
@@ -204,47 +220,425 @@ void calibrate()
     printf("Calibration complete\n");
 }
 
-void move_y_positive(int num_steps, int delay, int steps)
+/*
+    Move codes:
+        0: Move to -X, -Y
+            F: 0
+            B: 2
+        1: Move to -X, 0
+            F: 0 & 1
+            B: 2 & 3
+        2: Move to -X, +Y
+            F: 1
+            B: 3
+        3: Move to 0, -Y
+            F: 0 & 3
+            B: 1 & 2
+        4: Move to 0, 0
+            Do nothing
+        5: Move to 0, +Y
+            F: 1 & 2
+            B: 0 & 3
+        6: Move to +X, -Y
+            F: 3
+            B: 1
+        7: Move to +X, 0
+            F: 2 & 3
+            B: 0 & 1
+        8: Move to +X, +Y
+            F: 2
+            B: 0
+*/
+
+/*
+    Move 0, -Y
+    Forward: 0
+    Backward: 2
+*/
+void move_0(int num_steps, int delay_us)
 {
-    for (int i = 0; i < num_steps; i++)
+    // Move stepper 2 to lower limit
+    while (sensor_values[2] > TENSION_LOWER_LIMIT)
     {
+        l293d_step_backward(&stepper2, REVERSE_DELAY, 1);
+    }
 
-        // Read tension from steppers 1 and 2 to check they are not over tensioned
-        while (mutex)
-        {
-            printf("Waiting for mutex to be released\n");
-        };
+    l293d_stop(&stepper2);
 
-        // Set mutex
-        mutex = true;
-
-        int diff_2_3 = ads1115_read_diff_2_3(&adc1);
-        int diff_0_1 = ads1115_read_diff_0_1(&adc2);
-
-        printf("diff_2_3: %d\n", diff_2_3);
-        printf("diff_0_1: %d\n", diff_0_1);
-
-        // Release mutex
-        mutex = false;
-
-        if (diff_2_3 > TENSION_HARD_UPPER_LIMIT || diff_0_1 > TENSION_HARD_UPPER_LIMIT)
-        {
-            printf("Steppers are over tensioned\n");
-            return;
-        }
-        else
-        {
-            // Move the steppers
-            printf("About to move...\n");
-            l293d_step_forward(&stepper1, delay, 4);
-            l293d_step_forward(&stepper2, delay, 4);
-
-            l293d_step_backward(&stepper0, delay, 8);
-            l293d_step_backward(&stepper3, delay, 8);
-            printf("movement complete\n");
-        }
+    // Move stepper 0
+    if(sensor_values[0] < TENSION_UPPER_LIMIT)
+    {
+        // Move stepper 0
+        l293d_step_forward(&stepper0, delay_us, num_steps);
+    }
+    else{
+        // printf("Move 0: Stalled\n");
     }
 }
+
+/*
+    Move -X, 0
+    Forward: 0 & 1
+    Backward: 2 & 3
+*/
+void move_1(int num_steps, int delay_us)
+{
+    // Move steppers 2 and 3 to lower limit
+    while (sensor_values[2] > TENSION_LOWER_LIMIT || sensor_values[3] > TENSION_LOWER_LIMIT)
+    {
+        if (sensor_values[2] > TENSION_LOWER_LIMIT)
+        {
+            l293d_step_backward(&stepper2, REVERSE_DELAY, 1);
+        }
+
+        if (sensor_values[3] > TENSION_LOWER_LIMIT)
+        {
+            l293d_step_backward(&stepper3, REVERSE_DELAY, 1);
+        }
+    }
+
+    l293d_stop(&stepper2);
+    l293d_stop(&stepper3);
+
+    // Move steppers 0 and 1
+    if(sensor_values[0] < TENSION_UPPER_LIMIT && sensor_values[1] < TENSION_UPPER_LIMIT)
+    {
+        // Move both steppers
+        // printf("Move 1\n");
+        l293d_step_forward(&stepper0, delay_us, num_steps);
+        l293d_step_forward(&stepper1, delay_us, num_steps);
+    }
+    else if(sensor_values[0] < TENSION_UPPER_LIMIT)
+    {
+        // Move stepper 0
+        // printf("Move 1: Stepper 1 stalled\n");
+        l293d_step_forward(&stepper0, delay_us, num_steps);
+    }
+    else if(sensor_values[1] < TENSION_UPPER_LIMIT)
+    {
+        // Move stepper 1
+        // printf("Move 1: Stepper 0 stalled\n");
+        l293d_step_forward(&stepper1, delay_us, num_steps);
+    }
+    else{
+        // printf("Move 1: Stalled\n");
+    }
+}
+
+/*
+    Move -X, +Y
+    Forward: 1
+    Backward: 3
+*/
+void move_2(int num_steps, int delay_us)
+{
+    // Move stepper 3 to lower limit
+    while (sensor_values[3] > TENSION_LOWER_LIMIT)
+    {
+        l293d_step_backward(&stepper3, REVERSE_DELAY, 1);
+    }
+
+    l293d_stop(&stepper3);
+
+    // Move stepper 1
+    if(sensor_values[1] < TENSION_UPPER_LIMIT)
+    {
+        // Move stepper 1
+        l293d_step_forward(&stepper1, delay_us, num_steps);
+    }
+    else{
+        // printf("Move 2: Stalled\n");
+    }
+}
+
+/*
+    Move 0, -Y
+    Forward: 0 & 3
+    Backward: 1 & 2
+*/
+void move_3(int num_steps, int delay_us)
+{
+    // Move steppers 1 and 2 to lower limit
+    while (sensor_values[1] > TENSION_LOWER_LIMIT || sensor_values[2] > TENSION_LOWER_LIMIT)
+    {
+        if (sensor_values[1] > TENSION_LOWER_LIMIT)
+        {
+            l293d_step_backward(&stepper1, REVERSE_DELAY, 1);
+        }
+
+        if (sensor_values[2] > TENSION_LOWER_LIMIT)
+        {
+            l293d_step_backward(&stepper2, REVERSE_DELAY, 1);
+        }
+    }
+
+    l293d_stop(&stepper1);
+    l293d_stop(&stepper2);
+
+    // Move steppers 0 and 3
+    if(sensor_values[0] < TENSION_UPPER_LIMIT && sensor_values[3] < TENSION_UPPER_LIMIT)
+    {
+        // Move both steppers
+        // printf("Move 3\n");
+        l293d_step_forward(&stepper0, delay_us, num_steps);
+        l293d_step_forward(&stepper3, delay_us, num_steps);
+    }
+    else if(sensor_values[0] < TENSION_UPPER_LIMIT)
+    {
+        // Move stepper 0
+        // printf("Move 3: Stepper 3 stalled\n");
+        l293d_step_forward(&stepper0, delay_us, num_steps);
+    }
+    else if(sensor_values[3] < TENSION_UPPER_LIMIT)
+    {
+        // Move stepper 3
+        // printf("Move 3: Stepper 0 stalled\n");
+        l293d_step_forward(&stepper3, delay_us, num_steps);
+    }
+    else{
+        // printf("Move 3: Stalled\n");
+    }
+}
+
+/*
+    Move 0, 0
+    Do nothing
+*/
+void move_4(int num_steps, int delay_us)
+{
+    // Do nothing
+}
+
+/*
+    Move 0, +Y
+    Forward: 1 & 2
+    Backward: 0 & 3
+*/
+void move_5(int num_steps, int delay_us)
+{
+    // Move steppers 0 & 3 to lower limit
+    while (sensor_values[0] > TENSION_LOWER_LIMIT || sensor_values[3] > TENSION_LOWER_LIMIT)
+    {
+        if (sensor_values[0] > TENSION_LOWER_LIMIT)
+        {
+            l293d_step_backward(&stepper0, REVERSE_DELAY, 1);
+        }
+
+        if (sensor_values[3] > TENSION_LOWER_LIMIT)
+        {
+            l293d_step_backward(&stepper3, REVERSE_DELAY, 1);
+        }
+    }
+
+    l293d_stop(&stepper0);
+    l293d_stop(&stepper3);
+
+    // Move steppers 1 and 2
+    if(sensor_values[1] < TENSION_UPPER_LIMIT && sensor_values[2] < TENSION_UPPER_LIMIT)
+    {
+        // Move both steppers
+        // printf("Move 5\n");
+        l293d_step_forward(&stepper1, delay_us, num_steps);
+        l293d_step_forward(&stepper2, delay_us, num_steps);
+    }
+    else if(sensor_values[1] < TENSION_UPPER_LIMIT)
+    {
+        // Move stepper 1
+        // printf("Move 5: Stepper 2 stalled\n");
+        l293d_step_forward(&stepper1, delay_us, num_steps);
+    }
+    else if(sensor_values[2] < TENSION_UPPER_LIMIT)
+    {
+        // Move stepper 2
+        // printf("Move 5: Stepper 1 stalled\n");
+        l293d_step_forward(&stepper2, delay_us, num_steps);
+    }
+    else{
+        // printf("Move 5: Stalled\n");
+    }
+}
+
+/*
+    Move +X, -Y
+    Forward: 3
+    Backward: 1
+*/
+void move_6(int num_steps, int delay_us)
+{
+    // Move stepper 1 to lower limit
+    while (sensor_values[1] > TENSION_LOWER_LIMIT)
+    {
+        l293d_step_backward(&stepper1, REVERSE_DELAY, 1);
+    }
+
+    l293d_stop(&stepper1);
+
+    // Move stepper 3
+    if(sensor_values[3] < TENSION_UPPER_LIMIT)
+    {
+        // Move stepper 3
+        l293d_step_forward(&stepper3, delay_us, num_steps);
+    }
+    else{
+        // printf("Move 6: Stalled\n");
+    }
+}
+
+/*
+    Move +X, 0
+    Forward: 2 & 3
+    Backward: 0 & 1
+*/
+void move_7(int num_steps, int delay_us)
+{
+    // Move steppers 0 and 1 to lower limit
+    while (sensor_values[0] > TENSION_LOWER_LIMIT || sensor_values[1] > TENSION_LOWER_LIMIT)
+    {
+        if (sensor_values[0] > TENSION_LOWER_LIMIT)
+        {
+            l293d_step_backward(&stepper0, REVERSE_DELAY, 1);
+        }
+
+        if (sensor_values[1] > TENSION_LOWER_LIMIT)
+        {
+            l293d_step_backward(&stepper1, REVERSE_DELAY, 1);
+        }
+    }
+
+    l293d_stop(&stepper0);
+    l293d_stop(&stepper1);
+
+    // Move steppers 2 and 3
+    if(sensor_values[2] < TENSION_UPPER_LIMIT && sensor_values[3] < TENSION_UPPER_LIMIT)
+    {
+        // Move both steppers
+        // printf("Move 7\n");
+        l293d_step_forward(&stepper2, delay_us, num_steps);
+        l293d_step_forward(&stepper3, delay_us, num_steps);
+    }
+    else if(sensor_values[2] < TENSION_UPPER_LIMIT)
+    {
+        // Move stepper 2
+        // printf("Move 7: Stepper 3 stalled\n");
+        l293d_step_forward(&stepper2, delay_us, num_steps);
+    }
+    else if(sensor_values[3] < TENSION_UPPER_LIMIT)
+    {
+        // Move stepper 3
+        // printf("Move 7: Stepper 2 stalled\n");
+        l293d_step_forward(&stepper3, delay_us, num_steps);
+    }
+    else{
+        // printf("Move 7: Stalled\n");
+    }
+}
+
+/*
+    Move +X, +Y
+    Forward: 2
+    Backward: 0
+*/
+void move_8(int num_steps, int delay_us)
+{
+    // Move stepper 0 to lower limit
+    while (sensor_values[0] > TENSION_LOWER_LIMIT)
+    {
+        l293d_step_backward(&stepper0, REVERSE_DELAY, 1);
+    }
+
+    l293d_stop(&stepper0);
+
+    // Move stepper 2
+    if(sensor_values[2] < TENSION_UPPER_LIMIT)
+    {
+        // Move stepper 2
+        l293d_step_forward(&stepper2, delay_us, num_steps);
+    }
+    else{
+        // printf("Move 8: Stalled\n");
+    }
+}
+
+void move(int num_steps, int delay_us, int x, int y)
+{
+    // Combine x and y into a single move code
+    int move_code = (x + 1) * 3 + (y + 1);
+
+    /*
+    Move codes:
+        0: Move to -X, -Y
+            F: 0
+            B: 2
+        1: Move to -X, 0
+            F: 0 & 1
+            B: 2 & 3
+        2: Move to -X, +Y
+            F: 1
+            B: 3
+        3: Move to 0, -Y
+            F: 0 & 3
+            B: 1 & 2
+        4: Move to 0, 0
+            Do nothing
+        5: Move to 0, +Y
+            F: 1 & 2
+            B: 0 & 3
+        6: Move to +X, -Y
+            F: 3
+            B: 1
+        7: Move to +X, 0
+            F: 2 & 3
+            B: 0 & 1
+        8: Move to +X, +Y
+            F: 2
+            B: 0
+*/
+
+    switch (move_code)
+    {
+    case 0:
+        // Move to -X, -Y
+        move_0(num_steps, delay_us);
+        break;
+    case 1:
+        // Move to -X, 0
+        move_1(num_steps, delay_us);
+        break;
+    case 2:
+        // Move to -X, +Y
+        move_2(num_steps, delay_us);
+        break;
+    case 3:
+        // Move to 0, -Y
+        move_3(num_steps, delay_us);
+        break;
+    case 4:
+        // Move to 0, 0
+        move_4(num_steps, delay_us);
+        break;
+    case 5:
+        // Move to 0, +Y
+        move_5(num_steps, delay_us);
+        break;
+    case 6:
+        // Move to +X, -Y
+        move_6(num_steps, delay_us);
+        break;
+    case 7:
+        // Move to +X, 0
+        move_7(num_steps, delay_us);
+        break;
+    case 8:
+        // Move to +X, +Y
+        move_8(num_steps, delay_us);
+        break;
+    default:
+        // Invalid move code
+        printf("Invalid move code\n");
+        break;
+    }
+}
+
 
 void homing()
 {
@@ -255,7 +649,7 @@ void homing()
     // Pull steppers 0 and 2 (step forward) independently until hard limit is reached.
     printf("Homing to +Y\n");
 
-    int stepper_delay = 10000;
+    int stepper_delay = 1000;
 
     while (mutex)
     {
@@ -367,7 +761,7 @@ void homing()
 }
 
 int main()
-{
+    {
     stdio_init_all();
 
     setup_steppers();
@@ -378,40 +772,16 @@ int main()
     gpio_pull_up(I2C_SDA);
     gpio_pull_up(I2C_SCL);
 
+    // Initialize Onboard LED
+    gpio_init(ONBOARD_LED);
+    gpio_set_dir(ONBOARD_LED, GPIO_OUT);
+
     ads1115_init(&adc1, I2C_PORT, 0x48);
     ads1115_init(&adc2, I2C_PORT, 0x49);
 
-    // Wait for serial command to start calibration
-    char command[10];
-    printf("Enter 'stop' at any time to stop the program\n");
-    printf("Enter 'start' to begin calibration:\n");
-    while (true)
-    {
-        if (fgets(command, sizeof(command), stdin) != NULL)
-        {
-            // Remove newline character if present
-            command[strcspn(command, "\n")] = 0;
-            if (strcmp(command, "start") == 0)
-            {
-                break;
-            }
-            printf("Invalid command. Enter 'start' to begin calibration:\n");
-        }
-    }
-
     calibrate();
 
-    int num_steps = 200;
-    int speed = 1;
-    int delay = 0;
-
-    //
-
     int magnitude = 4;
-
-    // move_y_positive(20, 10000, 1000);
-
-    sleep_ms(1000);
 
     printf("Homing...\n");
     // homing();
@@ -423,46 +793,82 @@ int main()
     {
         // printf("Hello, world!\n");
 
-        if (stop_flag)
-        {
-            printf("Stopping program\n");
-            break;
-        }
+        // if (stop_flag)
+        // {
+        //     printf("Stopping program\n");
+        //     break;
+        // }
 
         // Wait for mutex to be released
-        while (mutex)
-        {
-            printf("Waiting for mutex to be released\n");
-        };
+        // while (mutex)
+        // {
+        //     printf("Waiting for mutex to be released\n");
+        // };
 
-        // Set mutex
-        mutex = true;
+        // // Set mutex
+        // mutex = true;
 
-        // Set the control vector for the stepper controller
-        for (int i = 0; i < NUM_STEPPERS; i++)
+        // // Set the control vector for the stepper controller
+        // for (int i = 0; i < NUM_STEPPERS; i++)
+        // {
+        //     if (sensor_values[i] > TENSION_UPPER_LIMIT)
+        //     {
+        //         vector[i] = -1;
+        //     }
+        //     else if (sensor_values[i] < TENSION_LOWER_LIMIT)
+        //     {
+        //         vector[i] = 1;
+        //     }
+        //     else
+        //     {
+        //         vector[i] = 0;
+        //     }
+        // }
+
+        // // Release mutex
+        // mutex = false;
+
+        // printf("Load[%d, %d, %d, %d]\n", sensor_values[0], sensor_values[1], sensor_values[2], sensor_values[3]);
+
+
+        // printf("Vector: [%d, %d, %d, %d]\n", vector[0], vector[1], vector[2], vector[3]);
+
+        // // Move the steppers
+        // l293d_controller_vector(&controller, 5000, vector);
+
+        // move(1, 10000, 0, -1);
+
+        // sleep_ms(10);
+
+        int delay = 4;
+
+        // Move 0, +Y
+        for(int i = 0; i < 1000; i++)
         {
-            if (diff_array[i] > TENSION_UPPER_LIMIT)
-            {
-                vector[i] = -1;
-            }
-            else if (diff_array[i] < TENSION_LOWER_LIMIT)
-            {
-                vector[i] = 1;
-            }
-            else
-            {
-                vector[i] = 0;
-            }
+            move(1, FORWARD_DELAY, 0, 1);
+            sleep_ms(delay);
         }
 
-        // Release mutex
-        mutex = false;
+        // Move 0, -Y
+        for(int i = 0; i < 1000; i++)
+        {
+            move(1, FORWARD_DELAY, 0, -1);
+            sleep_ms(delay);
+        }
 
-        printf("Vector: %d, %d, %d, %d\n", vector[0], vector[1], vector[2], vector[3]);
+        // Move +X, 0
+        for(int i = 0; i < FORWARD_DELAY; i++)
+        {
+            move(1, FORWARD_DELAY, 1, 0);
+            sleep_ms(delay);
+        }
 
-        l293d_controller_vector(&controller, 100, vector);
-
-        sleep_ms(100);
+        // Move -X, 0
+        for(int i = 0; i < 1000; i++)
+        {
+            move(1, FORWARD_DELAY, -1, 0);
+            sleep_ms(delay);
+        }
     }
 
     return 0;
