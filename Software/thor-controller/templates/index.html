@@ -98,6 +98,12 @@
             display: flex;
             justify-content: center;
         }
+
+        .highlight {
+        background-color: yellow; /* Visual highlight color */
+        color: black;
+    }
+</style>
     </style>
 </head>
 <body>
@@ -132,56 +138,49 @@
 
             <!-- Controller -->
             <div class="controller">
-                <div class="controller-row">
-                    <button onclick="sendCommand('/move_up')">Up</button>
+                <div class="controller">
+                    <div class="controller-row">
+                        <button id="up_button">Up</button>
+                    </div>
+                    <div class="controller-row">
+                        <button id="left_button">Left</button>
+                        <button id="right_button">Right</button>
+                    </div>
+                    <div class="controller-row">
+                        <button id="down_button">Down</button>
+                    </div>
                 </div>
-                <div class="controller-row">
-                    <button onclick="sendCommand('/move_left')">Left</button>
-                    <button onclick="sendCommand('/move_right')">Right</button>
-                </div>
-                <div class="controller-row">
-                    <button onclick="sendCommand('/move_down')">Down</button>
-                </div>
+                
             </div>
         </div>
 
         <!-- Controls Bar -->
         <div class="controls-bar">
             <div>
-                <h3>Select Color to Track</h3>
-                <select id="color_selector" onchange="updateColor()">
-                    <option value="red">Red</option>
-                    <option value="green" selected>Green</option>
-                    <option value="blue">Blue</option>
-                </select>
-            </div>
-            <div>
-                <h3>Adjust Color Range</h3>
-                <label>Lower Hue: 
-                    <input type="range" id="lower_hue" min="0" max="180" oninput="updateValue('lower_hue')">
-                    <span id="lower_hue_value">50</span>
+                <h3>Select Target Color</h3>
+                <label>Hue: 
+                    <input type="range" id="hue_slider" min="0" max="360" step="1" oninput="updateColorPreview()">
+                    <input type="number" id="hue_value" min="0" max="360" value="0" oninput="updateSliderFromInput('hue')">
                 </label>
                 <br>
-                <label>Upper Hue: 
-                    <input type="range" id="upper_hue" min="0" max="180" oninput="updateValue('upper_hue')">
-                    <span id="upper_hue_value">70</span>
+                <label>Saturation: 
+                    <input type="range" id="saturation_slider" min="0" max="100" step="1" oninput="updateColorPreview()">
+                    <input type="number" id="saturation_value" min="0" max="100" value="100" oninput="updateSliderFromInput('saturation')">
                 </label>
+                <br>
+                <label>Lightness: 
+                    <input type="range" id="lightness_slider" min="0" max="100" step="1" oninput="updateColorPreview()">
+                    <input type="number" id="lightness_value" min="0" max="100" value="50" oninput="updateSliderFromInput('lightness')">
+                </label>
+                <div id="color_preview" style="width: 50px; height: 50px; background-color: hsl(0, 100%, 50%); border: 1px solid #555;"></div>
             </div>
             <div>
-                <h3>Brightness Control</h3>
-                <label>Brightness: 
-                    <input type="range" id="brightness" min="0" max="100" value="30" oninput="updateValue('brightness')">
-                    <span id="brightness_value">30</span>
+                <h3>Color Detection Threshold</h3>
+                <label>Threshold Width: 
+                    <input type="range" id="threshold_width" min="0" max="100" value="30" oninput="updateThresholdPreview()">
+                    <span id="threshold_value">30</span>
                 </label>
             </div>
-            <div>
-                <h3>Adjust Contour Area</h3>
-                <label>Min Contour Area: 
-                    <input type="range" id="min_contour_area" min="100" max="1000" value="250" oninput="updateContourArea()">
-                    <span id="min_contour_area_value">250</span>
-                </label>
-            </div>
-        </div>
     </div>
 
     <script>
@@ -190,45 +189,103 @@
                 .then(response => response.text())
                 .then(data => {
                     const logOutput = document.getElementById("log_output");
-                    logOutput.innerHTML = data.replace(/\\n/g, "<br>");
+                    logOutput.innerHTML = data.replace(/\n/g, "<br>");
                     logOutput.scrollTop = logOutput.scrollHeight;
                 });
         }
-        setInterval(fetchLogs, 50);
+        setInterval(fetchLogs, 500);
 
-        function updateValue(id) {
-            var slider = document.getElementById(id);
-            var output = document.getElementById(id + '_value');
-            output.innerHTML = slider.value;
-            console.log(id + ' value:', slider.value);
-            // Add your code to handle slider value change
-        }
+        function updateBrightness() {
+            const slider = document.getElementById("brightness");
+            const value = slider.value;
+            document.getElementById("brightness_value").innerHTML = value;
 
-        function updateContourArea() {
-            var slider = document.getElementById("min_contour_area");
-            var output = document.getElementById("min_contour_area_value");
-            output.innerHTML = slider.value;
-
-            // Send the new value to the server
-            fetch('/update_contour_area', {
+            fetch('/update_brightness', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ min_contour_area: slider.value }),
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ brightness: value })
             });
         }
 
-        // JavaScript to create and render the Sensor Bar Chart
+        function updateThresholdPreview() {
+        const thresholdSlider = document.getElementById("threshold_width");
+        const thresholdValue = document.getElementById("threshold_value");
+        thresholdValue.innerHTML = thresholdSlider.value;
+    }
+
+    function updateColorPreview() {
+        const hue = document.getElementById("hue_slider").value;
+        const saturation = document.getElementById("saturation_slider").value;
+        const lightness = document.getElementById("lightness_slider").value;
+
+        document.getElementById("hue_value").value = hue;
+        document.getElementById("saturation_value").value = saturation;
+        document.getElementById("lightness_value").value = lightness;
+
+        document.getElementById("color_preview").style.backgroundColor = `hsl(${hue}, ${saturation}%, ${lightness}%)`;
+    }
+
+    function updateSliderFromInput(type) {
+        const slider = document.getElementById(`${type}_slider`);
+        const value = document.getElementById(`${type}_value`).value;
+        slider.value = value;
+        updateColorPreview();
+    }
+
+    function updateBrightness() {
+        const slider = document.getElementById("brightness");
+        const value = slider.value;
+        document.getElementById("brightness_value").innerHTML = value;
+
+        fetch('/update_brightness', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ brightness: value })
+        });
+    }
+
+function hslToRgb(h, s, l) {
+    // Convert HSL (Hue, Saturation, Lightness) to RGB
+    let r, g, b;
+
+    if (s === 0) {
+        r = g = b = l; // Achromatic
+    } else {
+        const hue2rgb = (p, q, t) => {
+            if (t < 0) t += 1;
+            if (t > 1) t -= 1;
+            if (t < 1 / 6) return p + (q - p) * 6 * t;
+            if (t < 1 / 2) return q;
+            if (t < 2 / 3) return p + (q - p) * (2 / 3 - t) * 6;
+            return p;
+        };
+
+        const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+        const p = 2 * l - q;
+        r = hue2rgb(p, q, h + 1 / 3);
+        g = hue2rgb(p, q, h);
+        b = hue2rgb(p, q, h - 1 / 3);
+    }
+
+    return {
+        r: Math.round(r * 255),
+        g: Math.round(g * 255),
+        b: Math.round(b * 255)
+    };
+}
+
+
+
+        // Bar chart for sensor values
         document.addEventListener('DOMContentLoaded', function () {
-            var ctx = document.getElementById('sensorBarChart').getContext('2d');
-            var sensorBarChart = new Chart(ctx, {
+            const ctx = document.getElementById('sensorBarChart').getContext('2d');
+            const sensorBarChart = new Chart(ctx, {
                 type: 'bar',
                 data: {
                     labels: ['Sensor 1', 'Sensor 2', 'Sensor 3', 'Sensor 4'],
                     datasets: [{
                         label: 'Sensor Values',
-                        data: [0, 0, 0, 0],  // Initialize with zeroes
+                        data: [0, 0, 0, 0],
                         backgroundColor: [
                             'rgba(255, 99, 132, 0.2)',
                             'rgba(54, 162, 235, 0.2)',
@@ -248,28 +305,110 @@
                     scales: {
                         y: {
                             beginAtZero: true,
-                            max: 300  // Set the maximum value of the y-axis to 300
+                            max: 300
                         }
                     }
                 }
             });
 
-            setInterval(fetchSensorValues, 50);
+            function fetchSensorValues() {
+                fetch('/sensor_values')
+                    .then(response => response.json())
+                    .then(data => {
+                        sensorBarChart.data.datasets[0].data = data.sensor_values;
+                        sensorBarChart.update();
+                    })
+                    .catch(error => console.error('Error fetching sensor values:', error));
+            }
+
+            setInterval(fetchSensorValues, 100);
         });
 
-        function fetchSensorValues() {
-            fetch('/sensor_values')
-                .then(response => response.json())
-                .then(data => {
-                    sensorBarChart.data.datasets[0].data = data.sensor_values;
-                    sensorBarChart.update();
-                })
-                .catch(error => console.error('Error fetching sensor values:', error));
+        function sendCommand(endpoint) {
+        fetch(endpoint, { method: 'POST' })
+            .then(response => response.json())
+            .then(data => console.log(`Action: ${data.action}`))
+            .catch(error => console.error('Error sending command:', error));
+    }
+
+    const keyMap = {
+            'w': { x: 0, y: 1, button: 'up_button' },  // Up
+            's': { x: 0, y: -1, button: 'down_button' }, // Down
+            'a': { x: -1, y: 0, button: 'left_button' }, // Left
+            'd': { x: 1, y: 0, button: 'right_button' }   // Right
+        };
+
+        document.addEventListener('keydown', (event) => {
+            const key = event.key.toLowerCase();
+            if (key in keyMap) {
+                const { x, y, button } = keyMap[key];
+                sendMoveCommand(x, y);
+                document.getElementById(button).classList.add('highlight');
+            }
+        });
+
+        document.addEventListener('keyup', (event) => {
+            const key = event.key.toLowerCase();
+            if (key in keyMap) {
+                const { button } = keyMap[key];
+                document.getElementById(button).classList.remove('highlight');
+            }
+        });
+
+        function sendMoveCommand(x, y) {
+            fetch('/move', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ x, y })
+            })
+            .then(response => response.json())
+            .then(data => console.log(`Action: ${data.action}`))
+            .catch(error => console.error('Error sending move command:', error));
         }
 
-        function move(direction) {
-            console.log(`Move[${direction}]`);
-        }
+    document.getElementById('up_button').addEventListener('mousedown', () => {
+            sendMoveCommand(0, 1);
+            document.getElementById('up_button').classList.add('highlight');
+        });
+        document.getElementById('up_button').addEventListener('mouseup', () => {
+            document.getElementById('up_button').classList.remove('highlight');
+        });
+        document.getElementById('up_button').addEventListener('mouseleave', () => {
+            document.getElementById('up_button').classList.remove('highlight');
+        });
+
+        document.getElementById('down_button').addEventListener('mousedown', () => {
+            sendMoveCommand(0, -1);
+            document.getElementById('down_button').classList.add('highlight');
+        });
+        document.getElementById('down_button').addEventListener('mouseup', () => {
+            document.getElementById('down_button').classList.remove('highlight');
+        });
+        document.getElementById('down_button').addEventListener('mouseleave', () => {
+            document.getElementById('down_button').classList.remove('highlight');
+        });
+
+        document.getElementById('left_button').addEventListener('mousedown', () => {
+            sendMoveCommand(-1, 0);
+            document.getElementById('left_button').classList.add('highlight');
+        });
+        document.getElementById('left_button').addEventListener('mouseup', () => {
+            document.getElementById('left_button').classList.remove('highlight');
+        });
+        document.getElementById('left_button').addEventListener('mouseleave', () => {
+            document.getElementById('left_button').classList.remove('highlight');
+        });
+
+        document.getElementById('right_button').addEventListener('mousedown', () => {
+            sendMoveCommand(1, 0);
+            document.getElementById('right_button').classList.add('highlight');
+        });
+        document.getElementById('right_button').addEventListener('mouseup', () => {
+            document.getElementById('right_button').classList.remove('highlight');
+        });
+        document.getElementById('right_button').addEventListener('mouseleave', () => {
+            document.getElementById('right_button').classList.remove('highlight');
+        });
     </script>
 </body>
 </html>

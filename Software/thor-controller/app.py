@@ -19,11 +19,16 @@ picam2.start()
 # Initialize UART connection
 uart_port = '/dev/ttyAMA0'
 baud_rate = 115200
-ser = serial.Serial(uart_port, baud_rate, timeout=1)
+try:
+    ser = serial.Serial(uart_port, baud_rate, timeout=1)
+except serial.SerialException as e:
+    print(f"Error initializing UART: {e}")
+    ser = None
 
-# Log data storage
+# Global variables for shared resources
 log_data = []
-sensor_values = [0, 0, 0, 0]  # Global variable to store sensor values
+sensor_values = [0, 0, 0, 0]
+data_lock = threading.Lock()  # Lock for thread-safe access to shared resources
 
 # Minimum contour area for valid detection
 MIN_CONTOUR_AREA = 20
@@ -42,29 +47,39 @@ color_ranges = {
 }
 lower_hue, upper_hue = color_ranges[selected_color][0][0], color_ranges[selected_color][1][0]  # Default slider values
 
+
 def generate_log_data():
     """Thread for continuous UART log reading."""
-    global sensor_values
+    global sensor_values  # Use the global variable
     while True:
-        if ser.in_waiting > 0:
+        if ser and ser.in_waiting > 0:
             line = ser.readline().decode('utf-8').strip()
-            log_data.append(line)
-            if len(log_data) > 20:
-                log_data.pop(0)
-            
+            with data_lock:  # Lock access to shared resources
+                log_data.append(line)
+                if len(log_data) > 20:
+                    log_data.pop(0)
+
             # Parse the sensor values from "Load[0,0,0,0]" format
             if line.startswith("Load[") and line.endswith("]"):
                 try:
                     values = line[5:-1].split(",")
-                    sensor_values = [int(value) for value in values]
-                    print(f"Sensor values updated: {sensor_values}")  # Log parsed sensor values
+                    with data_lock:  # Safely update sensor_values
+                        sensor_values = [int(value) for value in values]
+                    # print(f"Sensor values updated: {sensor_values}")  # Log parsed sensor values
                 except ValueError:
                     print(f"Failed to parse sensor values: {line}")
+
 
 # Start the log generation in a separate thread
 log_thread = threading.Thread(target=generate_log_data)
 log_thread.daemon = True
 log_thread.start()
+
+
+@app.route('/')
+def index():
+    return render_template('index.html')
+
 
 # Function to generate live video feed with minimal processing and FPS tracking
 def generate_video_feed():
@@ -90,6 +105,11 @@ def generate_video_feed():
         if ret:
             yield (b'--frame\r\n'
                    b'Content-Type: image/jpeg\r\n\r\n' + buffer.tobytes() + b'\r\n')
+
+@app.route('/video_feed')
+def video_feed():
+    return Response(generate_video_feed(), mimetype='multipart/x-mixed-replace; boundary=frame')
+
 
 # Function to generate mask feed with color detection, overlay, and FPS tracking
 def generate_mask_feed():
@@ -154,41 +174,19 @@ def generate_mask_feed():
             yield (b'--frame\r\n'
                    b'Content-Type: image/jpeg\r\n\r\n' + buffer.tobytes() + b'\r\n')
 
-@app.route('/')
-def index():
-    return render_template('index.html')
-
-# Video feed route
-@app.route('/video_feed')
-def video_feed():
-    return Response(generate_video_feed(), mimetype='multipart/x-mixed-replace; boundary=frame')
-
-# Mask feed route
 @app.route('/mask_feed')
 def mask_feed():
     return Response(generate_mask_feed(), mimetype='multipart/x-mixed-replace; boundary=frame')
 
-# Log feed route
-@app.route('/log_feed')
-def log_feed():
-    return Response("\n".join(log_data), mimetype='text/plain')
 
-# Endpoint to retrieve the sensor values for bar chart
 @app.route('/sensor_values')
 def get_sensor_values():
     """Endpoint to retrieve the sensor values."""
-    return jsonify(sensor_values=sensor_values)
+    global sensor_values
+    with data_lock:  # Lock access to shared resources
+        return jsonify(sensor_values=sensor_values)  # Properly return sensor values as JSON
 
-# Update color range
-@app.route('/update_range', methods=['POST'])
-def update_range():
-    global lower_hue, upper_hue
-    data = request.json
-    lower_hue = int(data['lower_hue'])
-    upper_hue = int(data['upper_hue'])
-    return jsonify(success=True)
 
-# Update brightness
 @app.route('/update_brightness', methods=['POST'])
 def update_brightness():
     global brightness_increase
@@ -196,7 +194,7 @@ def update_brightness():
     brightness_increase = int(data['brightness'])
     return jsonify(success=True)
 
-# Update color selection and reset hue range
+
 @app.route('/update_color', methods=['POST'])
 def update_color():
     global selected_color, lower_hue, upper_hue
@@ -205,33 +203,47 @@ def update_color():
     lower_hue, upper_hue = color_ranges[selected_color][0][0], color_ranges[selected_color][1][0]
     return jsonify(success=True, lower_hue=lower_hue, upper_hue=upper_hue)
 
-@app.route('/update_contour_area', methods=['POST'])
-def update_contour_area():
-    global MIN_CONTOUR_AREA
+
+@app.route('/update_range', methods=['POST'])
+def update_range():
+    global selected_color, lower_hue, upper_hue
     data = request.json
-    MIN_CONTOUR_AREA = int(data['min_contour_area'])
+    if 'rgb' in data:
+        rgb = data['rgb']
+        # Convert RGB to HSV
+        r, g, b = rgb
+        hsv = cv2.cvtColor(np.uint8([[[r, g, b]]]), cv2.COLOR_RGB2HSV)[0][0]
+        hue = hsv[0]
+        lower_hue = max(0, hue - 15)
+        upper_hue = min(180, hue + 15)
+    if 'threshold' in data:
+        threshold = int(data['threshold'])
+        lower_hue = max(0, lower_hue - threshold)
+        upper_hue = min(180, upper_hue + threshold)
     return jsonify(success=True)
 
-# New routes for movement controls
-@app.route('/move_up', methods=['POST'])
-def move_up():
-    ser.write(b'MOVE_UP\n')
-    return jsonify(success=True, action="MOVE_UP")
+@app.route('/log_feed')
+def log_feed():
+    """Returns the log data as plain text."""
+    with data_lock:
+        return "\n".join(log_data), 200, {'Content-Type': 'text/plain'}
 
-@app.route('/move_down', methods=['POST'])
-def move_down():
-    ser.write(b'MOVE_DOWN\n')
-    return jsonify(success=True, action="MOVE_DOWN")
+@app.route('/move', methods=['POST'])
+def move():
+    """Send move(x, y) command over UART."""
+    data = request.json
+    x = int(data.get('x', 0))
+    y = int(data.get('y', 0))
+    command = f"Move[{x},{y}]\n"
 
-@app.route('/move_left', methods=['POST'])
-def move_left():
-    ser.write(b'MOVE_LEFT\n')
-    return jsonify(success=True, action="MOVE_LEFT")
+    if ser:
+        ser.write(command.encode('utf-8'))
+        print(f"Sent command: {command.strip()}")
+        return jsonify(success=True, action=command.strip())
+    else:
+        print(f"UART not initialized. Failed to send command: {command.strip()}")
+        return jsonify(success=False, error="UART not initialized.")
 
-@app.route('/move_right', methods=['POST'])
-def move_right():
-    ser.write(b'MOVE_RIGHT\n')
-    return jsonify(success=True, action="MOVE_RIGHT")
 
 if __name__ == '__main__':
     print("Starting Flask server on port 5000")
