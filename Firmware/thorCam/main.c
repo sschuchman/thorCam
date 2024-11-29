@@ -1,11 +1,11 @@
 #include "pico/stdlib.h"
-#include "l293d.h"
+#include "include/l293d.h"
 #include <stdio.h>
-#include "ads1115.h"
+#include "include/ads1115.h"
 #include "hardware/i2c.h"
 #include "pico/multicore.h"
-#include "movement.h"
-#include "sensor.h"
+#include "include/movement.h"
+#include "include/sensor.h"
 
 #define LED_PIN 25 // Onboard LED pin
 
@@ -111,7 +111,7 @@ int main()
     gpio_set_function(UART_RX_PIN, GPIO_FUNC_UART);
     uart_set_irq_enables(UART_ID, true, false);
 
-    uart_rx_task();
+    //uart_rx_task();
 
     while (true)
     {

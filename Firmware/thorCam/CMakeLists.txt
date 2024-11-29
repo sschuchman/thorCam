@@ -33,10 +33,10 @@ pico_sdk_init()
 # Add executable. Default name is the project name, version 0.1
 add_executable(thor-freertos
     main.c
-    ads1115.c
-    l293d.c
-    sensor.c
-    movement.c
+    src/ads1115.c
+    src/l293d.c
+    src/sensor.c
+    src/movement.c
     # FreeRTOS-Kernel/portable/MemMang/heap_4.c
     # FreeRTOS-Kernel/portable/GCC/ARM_CM0/port.c
     # FreeRTOS-Kernel/portable/GCC/ARM_CM0/portasm.c
@@ -73,6 +73,7 @@ target_link_libraries(thor-freertos
 target_include_directories(thor-freertos PRIVATE
     ${CMAKE_CURRENT_LIST_DIR}
     ${CMAKE_CURRENT_LIST_DIR}/..
+    ${CMAKE_CURRENT_LIST_DIR}/include
     # ${CMAKE_CURRENT_LIST_DIR}/FreeRTOS-Kernel/include
     # ${CMAKE_CURRENT_LIST_DIR}/FreeRTOS-Kernel/portable/GCC/ARM_CM0
 )
