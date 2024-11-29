@@ -7,6 +7,8 @@
 #include "ads1115.h"
 #include "l293d.h"
 
+#define LED_PIN 25 // Onboard LED pin
+
 // External variable declarations
 extern ads1115_t adc1, adc2;
 extern int16_t diff_0_1_adc1, diff_2_3_adc1, diff_0_1_adc2, diff_2_3_adc2;

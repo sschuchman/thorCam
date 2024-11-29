@@ -1,6 +1,5 @@
 #include "sensor.h"
 
-
 // Variable definitions
 ads1115_t adc1, adc2;
 int16_t diff_0_1_adc1, diff_2_3_adc1, diff_0_1_adc2, diff_2_3_adc2;
@@ -11,8 +10,8 @@ volatile bool stop_flag = false;
 
 void read_ads111_task()
 {
-    while (true)
-    {
+    // while (true)
+    // {
         // Read from the first ADS1115 (address 0x48)
         diff_0_1_adc1 = ads1115_read_diff_0_1(&adc1);
         // printf("ADC1 (0x48) Differential between AIN0 and AIN1: %d\n", diff_0_1_adc1);
@@ -34,6 +33,9 @@ void read_ads111_task()
         // Set mutex
         mutex = true;
 
+        gpio_put(LED_PIN, 1);
+        sleep_ms(10);
+
         // Update diff_array
         sensor_values[0] = (diff_0_1_adc1 > 0) ? diff_0_1_adc1 : 0;
         sensor_values[1] = (diff_2_3_adc1 > 0) ? diff_2_3_adc1 : 0;
@@ -43,9 +45,11 @@ void read_ads111_task()
         // Release mutex
         mutex = false;
 
-        // printf("Load[%d, %d, %d, %d]\n", sensor_values[0], sensor_values[1], sensor_values[2], sensor_values[3]);
+        gpio_put(LED_PIN, 0);
 
-        sleep_ms(100);
+        printf("Load[%d, %d, %d, %d]\n", sensor_values[0], sensor_values[1], sensor_values[2], sensor_values[3]);
+
+        // sleep_ms(100);
 
         // char command[100];
 
@@ -59,12 +63,18 @@ void read_ads111_task()
         //         break;
         //     }
         // }
-    }
+    // }
 }
 
 void calibrate()
 {
-    printf("Calibrating ADS1115s...\n");
+    printf("Calibrating...\n");
+
+    // initialize the onboard LED
+    gpio_init(LED_PIN);
+
+    // set the onboard LED as output
+    gpio_set_dir(LED_PIN, GPIO_OUT);
 
     int unwinding_delay = 5000;
     int unwinding_steps = 200;
@@ -74,7 +84,7 @@ void calibrate()
     l293d_stop(&stepper2);
     l293d_stop(&stepper3);
 
-    printf("Calibrating stepper 0...\n");
+    printf("Calibrating 0\n");
     // Unwind stepper0
     l293d_step_backward(&stepper0, unwinding_delay, unwinding_steps);
     sleep_ms(1000);
@@ -92,7 +102,7 @@ void calibrate()
     // Stop the stepper
     l293d_stop(&stepper0);
 
-    printf("Calibrating stepper 1...\n");
+    printf("Calibrating 1\n");
     // Unwind stepper1
     l293d_step_backward(&stepper1, unwinding_delay, unwinding_steps);
     sleep_ms(1000);
@@ -110,7 +120,7 @@ void calibrate()
     // Stop the stepper
     l293d_stop(&stepper1);
 
-    printf("Calibrating stepper 2...\n");
+    printf("Calibrating 2\n");
     // Unwind stepper2
     l293d_step_backward(&stepper2, unwinding_delay, unwinding_steps);
     sleep_ms(1000);
@@ -128,7 +138,7 @@ void calibrate()
     // Stop the stepper
     l293d_stop(&stepper2);
 
-    printf("Calibrating stepper 3...\n");
+    printf("Calibrating 3\n");
     // Unwind stepper3
     l293d_step_backward(&stepper3, unwinding_delay, unwinding_steps);
     sleep_ms(1000);

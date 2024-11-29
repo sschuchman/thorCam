@@ -86,9 +86,6 @@ void ads1115_calibrate(ads1115_t *adc) {
 
     adc->diff_0_1_offset = diff_0_1;
     adc->diff_2_3_offset = diff_2_3;
-
-    printf("diff_0_1_offset: %d\n", adc->diff_0_1_offset);
-    printf("diff_2_3_offset: %d\n", adc->diff_2_3_offset);
 }
 
 void ads1115_calibrate_0_1(ads1115_t *adc) {
@@ -101,7 +98,7 @@ void ads1115_calibrate_0_1(ads1115_t *adc) {
 
     adc->diff_0_1_offset = diff_0_1;
 
-    printf("diff_0_1_offset: %d\n", adc->diff_0_1_offset);
+    printf("Offset: %d\n", adc->diff_0_1_offset);
 }
 
 void ads1115_calibrate_2_3(ads1115_t *adc) {
@@ -114,5 +111,5 @@ void ads1115_calibrate_2_3(ads1115_t *adc) {
 
     adc->diff_2_3_offset = diff_2_3;
 
-    printf("diff_2_3_offset: %d\n", adc->diff_2_3_offset);
+    printf("Offset: %d\n", adc->diff_2_3_offset);
 }

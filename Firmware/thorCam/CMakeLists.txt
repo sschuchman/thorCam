@@ -37,6 +37,7 @@ add_executable(thor-freertos
     src/l293d.c
     src/sensor.c
     src/movement.c
+    src/uart_rx.c
     # FreeRTOS-Kernel/portable/MemMang/heap_4.c
     # FreeRTOS-Kernel/portable/GCC/ARM_CM0/port.c
     # FreeRTOS-Kernel/portable/GCC/ARM_CM0/portasm.c
