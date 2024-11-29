@@ -35,6 +35,8 @@ add_executable(thor-freertos
     main.c
     ads1115.c
     l293d.c
+    sensor.c
+    movement.c
     # FreeRTOS-Kernel/portable/MemMang/heap_4.c
     # FreeRTOS-Kernel/portable/GCC/ARM_CM0/port.c
     # FreeRTOS-Kernel/portable/GCC/ARM_CM0/portasm.c
@@ -58,8 +60,14 @@ pico_enable_stdio_usb(thor-freertos 0)
 target_link_libraries(thor-freertos
     pico_stdlib
     hardware_i2c
+    hardware_uart
+    hardware_gpio
+    hardware_timer
+    hardware_irq
     pico_multicore
 )
+
+#target_link_libraries(thor-freertos pico_stdlib freertos hardware_i2c hardware_uart hardware_gpio)
 
 # Add the standard include files to the build
 target_include_directories(thor-freertos PRIVATE
