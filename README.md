@@ -1,11 +1,11 @@
 # Thoracic Camera
 
 # Contributors
-Sean Schuchman: January 2024 - Present
+Sean Schuchman: January 2024 - December 2024
 
-Jakob Schoeberle: August 2024 - Present
+Jakob Schoeberle: August 2024 - December 2024
 
-Colton Wall: August 2024 - Present
+Colton Wall: August 2024 - December 2024
 
 # Hardware
 - Raspberry Pi 5
