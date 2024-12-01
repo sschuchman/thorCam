@@ -10,60 +10,47 @@ volatile bool stop_flag = false;
 
 void read_ads111_task()
 {
-    // while (true)
+    // Read from the first ADS1115 (address 0x48)
+    diff_0_1_adc1 = ads1115_read_diff_0_1(&adc1);
+    // printf("ADC1 (0x48) Differential between AIN0 and AIN1: %d\n", diff_0_1_adc1);
+    diff_2_3_adc1 = ads1115_read_diff_2_3(&adc1);
+    // printf("ADC1 (0x48) Differential between AIN2 and AIN3: %d\n", diff_2_3_adc1);
+
+    // Read from the second ADS1115 (address 0x49)
+    diff_0_1_adc2 = ads1115_read_diff_0_1(&adc2);
+    // printf("ADC2 (0x49) Differential between AIN0 and AIN1: %d\n", diff_0_1_adc2);
+    diff_2_3_adc2 = ads1115_read_diff_2_3(&adc2);
+    // printf("ADC2 (0x49) Differential between AIN2 and AIN3: %d\n", diff_2_3_adc2);
+
+    // Wait for mutex to be released
+    // while (mutex)
     // {
-        // Read from the first ADS1115 (address 0x48)
-        diff_0_1_adc1 = ads1115_read_diff_0_1(&adc1);
-        // printf("ADC1 (0x48) Differential between AIN0 and AIN1: %d\n", diff_0_1_adc1);
-        diff_2_3_adc1 = ads1115_read_diff_2_3(&adc1);
-        // printf("ADC1 (0x48) Differential between AIN2 and AIN3: %d\n", diff_2_3_adc1);
+    //     printf("Waiting for mutex to be released\n");
+    // };
 
-        // Read from the second ADS1115 (address 0x49)
-        diff_0_1_adc2 = ads1115_read_diff_0_1(&adc2);
-        // printf("ADC2 (0x49) Differential between AIN0 and AIN1: %d\n", diff_0_1_adc2);
-        diff_2_3_adc2 = ads1115_read_diff_2_3(&adc2);
-        // printf("ADC2 (0x49) Differential between AIN2 and AIN3: %d\n", diff_2_3_adc2);
+    // // Set mutex
+    // mutex = true;
 
-        // Wait for mutex to be released
-        while (mutex)
-        {
-            printf("Waiting for mutex to be released\n");
-        };
+    gpio_put(LED_PIN, 1);
+    sleep_ms(10);
 
-        // Set mutex
-        mutex = true;
+    // Update diff_array
+    sensor_values[0] = (diff_0_1_adc1 > 0) ? diff_0_1_adc1 : 0;
+    sensor_values[1] = (diff_2_3_adc1 > 0) ? diff_2_3_adc1 : 0;
+    sensor_values[2] = (diff_0_1_adc2 > 0) ? diff_0_1_adc2 : 0;
+    sensor_values[3] = (diff_2_3_adc2 > 0) ? diff_2_3_adc2 : 0;
+    // sensor_values[0] = diff_0_1_adc1;
+    // sensor_values[1] = diff_2_3_adc1;
+    // sensor_values[2] = diff_0_1_adc2;
+    // sensor_values[3] = diff_2_3_adc2;
 
-        gpio_put(LED_PIN, 1);
-        sleep_ms(10);
+    // // Release mutex
+    // mutex = false;
 
-        // Update diff_array
-        sensor_values[0] = (diff_0_1_adc1 > 0) ? diff_0_1_adc1 : 0;
-        sensor_values[1] = (diff_2_3_adc1 > 0) ? diff_2_3_adc1 : 0;
-        sensor_values[2] = (diff_0_1_adc2 > 0) ? diff_0_1_adc2 : 0;
-        sensor_values[3] = (diff_2_3_adc2 > 0) ? diff_2_3_adc2 : 0;
+    gpio_put(LED_PIN, 0);
 
-        // Release mutex
-        mutex = false;
-
-        gpio_put(LED_PIN, 0);
-
-        printf("Load[%d, %d, %d, %d]\n", sensor_values[0], sensor_values[1], sensor_values[2], sensor_values[3]);
-
-        // sleep_ms(100);
-
-        // char command[100];
-
-        // if (fgets(command, sizeof(command), stdin) != NULL)
-        // {
-        //     // Remove newline character if present
-        //     command[strcspn(command, "\n")] = 0;
-        //     if (strcmp(command, "stop") == 0)
-        //     {
-        //         stop_flag = true;
-        //         break;
-        //     }
-        // }
-    // }
+    // Send the load values to the controller
+    printf("Load[%d, %d, %d, %d]\n", sensor_values[0], sensor_values[1], sensor_values[2], sensor_values[3]);
 }
 
 void calibrate()
@@ -97,6 +84,7 @@ void calibrate()
     {
         l293d_step_forward(&stepper0, 5000, 1);
         diff_0_1_adc1 = ads1115_read_diff_0_1(&adc1);
+        sleep_ms(1);
     }
 
     // Stop the stepper
@@ -115,6 +103,7 @@ void calibrate()
     {
         l293d_step_forward(&stepper1, 5000, 1);
         diff_2_3_adc1 = ads1115_read_diff_2_3(&adc1);
+        sleep_ms(1);
     }
 
     // Stop the stepper
@@ -133,6 +122,7 @@ void calibrate()
     {
         l293d_step_forward(&stepper2, 5000, 1);
         diff_0_1_adc2 = ads1115_read_diff_0_1(&adc2);
+        sleep_ms(1);
     }
 
     // Stop the stepper
@@ -151,6 +141,7 @@ void calibrate()
     {
         l293d_step_forward(&stepper3, 5000, 1);
         diff_2_3_adc2 = ads1115_read_diff_2_3(&adc2);
+        sleep_ms(1);
     }
 
     // Stop the stepper

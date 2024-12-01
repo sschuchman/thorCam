@@ -23,10 +23,16 @@ void setup_steppers()
 */
 void move_0(int num_steps, int delay_us)
 {
+
     // Move stepper 2 to lower limit
     while (sensor_values[2] > TENSION_LOWER_LIMIT)
     {
+        if(sensor_values[2] < TENSION_LOWER_LIMIT){
+            break;
+        }
+
         l293d_step_backward(&stepper2, REVERSE_DELAY, 1);
+        sleep_ms(1);
     }
 
     l293d_stop(&stepper2);
@@ -36,6 +42,7 @@ void move_0(int num_steps, int delay_us)
     {
         // Move stepper 0
         l293d_step_forward(&stepper0, delay_us, num_steps);
+        sleep_ms(1);
     }
     else
     {
@@ -53,14 +60,20 @@ void move_1(int num_steps, int delay_us)
     // Move steppers 2 and 3 to lower limit
     while (sensor_values[2] > TENSION_LOWER_LIMIT || sensor_values[3] > TENSION_LOWER_LIMIT)
     {
+        if(sensor_values[2] < TENSION_LOWER_LIMIT && sensor_values[3] < TENSION_LOWER_LIMIT){
+            break;
+        }
+
         if (sensor_values[2] > TENSION_LOWER_LIMIT)
         {
             l293d_step_backward(&stepper2, REVERSE_DELAY, 1);
+            sleep_ms(1);
         }
 
         if (sensor_values[3] > TENSION_LOWER_LIMIT)
         {
             l293d_step_backward(&stepper3, REVERSE_DELAY, 1);
+            sleep_ms(1);
         }
     }
 
@@ -74,18 +87,21 @@ void move_1(int num_steps, int delay_us)
         // printf("Move 1\n");
         l293d_step_forward(&stepper0, delay_us, num_steps);
         l293d_step_forward(&stepper1, delay_us, num_steps);
+        sleep_ms(1);
     }
     else if (sensor_values[0] < TENSION_UPPER_LIMIT)
     {
         // Move stepper 0
         // printf("Move 1: Stepper 1 stalled\n");
         l293d_step_forward(&stepper0, delay_us, num_steps);
+        sleep_ms(1);
     }
     else if (sensor_values[1] < TENSION_UPPER_LIMIT)
     {
         // Move stepper 1
         // printf("Move 1: Stepper 0 stalled\n");
         l293d_step_forward(&stepper1, delay_us, num_steps);
+        sleep_ms(1);
     }
     else
     {
@@ -103,7 +119,12 @@ void move_2(int num_steps, int delay_us)
     // Move stepper 3 to lower limit
     while (sensor_values[3] > TENSION_LOWER_LIMIT)
     {
+        if(sensor_values[3] < TENSION_LOWER_LIMIT){
+            break;
+        }
+
         l293d_step_backward(&stepper3, REVERSE_DELAY, 1);
+        sleep_ms(1);
     }
 
     l293d_stop(&stepper3);
@@ -113,6 +134,7 @@ void move_2(int num_steps, int delay_us)
     {
         // Move stepper 1
         l293d_step_forward(&stepper1, delay_us, num_steps);
+        sleep_ms(1);
     }
     else
     {
@@ -130,14 +152,20 @@ void move_3(int num_steps, int delay_us)
     // Move steppers 1 and 2 to lower limit
     while (sensor_values[1] > TENSION_LOWER_LIMIT || sensor_values[2] > TENSION_LOWER_LIMIT)
     {
+        if(sensor_values[1] < TENSION_LOWER_LIMIT && sensor_values[2] < TENSION_LOWER_LIMIT){
+            break;
+        }
+
         if (sensor_values[1] > TENSION_LOWER_LIMIT)
         {
             l293d_step_backward(&stepper1, REVERSE_DELAY, 1);
+            sleep_ms(1);
         }
 
         if (sensor_values[2] > TENSION_LOWER_LIMIT)
         {
             l293d_step_backward(&stepper2, REVERSE_DELAY, 1);
+            sleep_ms(1);
         }
     }
 
@@ -151,18 +179,21 @@ void move_3(int num_steps, int delay_us)
         // printf("Move 3\n");
         l293d_step_forward(&stepper0, delay_us, num_steps);
         l293d_step_forward(&stepper3, delay_us, num_steps);
+        sleep_ms(1);
     }
     else if (sensor_values[0] < TENSION_UPPER_LIMIT)
     {
         // Move stepper 0
         // printf("Move 3: Stepper 3 stalled\n");
         l293d_step_forward(&stepper0, delay_us, num_steps);
+        sleep_ms(1);
     }
     else if (sensor_values[3] < TENSION_UPPER_LIMIT)
     {
         // Move stepper 3
         // printf("Move 3: Stepper 0 stalled\n");
         l293d_step_forward(&stepper3, delay_us, num_steps);
+        sleep_ms(1);
     }
     else
     {
@@ -187,17 +218,34 @@ void move_4(int num_steps, int delay_us)
 void move_5(int num_steps, int delay_us)
 {
     // Move steppers 0 & 3 to lower limit
+
     while (sensor_values[0] > TENSION_LOWER_LIMIT || sensor_values[3] > TENSION_LOWER_LIMIT)
     {
+        // while(mutex){
+        //     printf("Waiting for mutex\n");
+        // }
+
+        // // Set the mutex
+        // mutex = true;
+
+        if(sensor_values[0] < TENSION_LOWER_LIMIT && sensor_values[3] < TENSION_LOWER_LIMIT){
+            break;
+        }
+
         if (sensor_values[0] > TENSION_LOWER_LIMIT)
         {
             l293d_step_backward(&stepper0, REVERSE_DELAY, 1);
+            sleep_ms(1);
         }
 
         if (sensor_values[3] > TENSION_LOWER_LIMIT)
         {
             l293d_step_backward(&stepper3, REVERSE_DELAY, 1);
+            sleep_ms(1);
         }
+
+        // // Release the mutex
+        // mutex = false;
     }
 
     l293d_stop(&stepper0);
@@ -210,18 +258,21 @@ void move_5(int num_steps, int delay_us)
         // printf("Move 5\n");
         l293d_step_forward(&stepper1, delay_us, num_steps);
         l293d_step_forward(&stepper2, delay_us, num_steps);
+        sleep_ms(1);
     }
     else if (sensor_values[1] < TENSION_UPPER_LIMIT)
     {
         // Move stepper 1
         // printf("Move 5: Stepper 2 stalled\n");
         l293d_step_forward(&stepper1, delay_us, num_steps);
+        sleep_ms(1);
     }
     else if (sensor_values[2] < TENSION_UPPER_LIMIT)
     {
         // Move stepper 2
         // printf("Move 5: Stepper 1 stalled\n");
         l293d_step_forward(&stepper2, delay_us, num_steps);
+        sleep_ms(1);
     }
     else
     {
@@ -239,7 +290,12 @@ void move_6(int num_steps, int delay_us)
     // Move stepper 1 to lower limit
     while (sensor_values[1] > TENSION_LOWER_LIMIT)
     {
+        if(sensor_values[1] < TENSION_LOWER_LIMIT){
+            break;
+        }
+
         l293d_step_backward(&stepper1, REVERSE_DELAY, 1);
+        sleep_ms(1);
     }
 
     l293d_stop(&stepper1);
@@ -249,6 +305,7 @@ void move_6(int num_steps, int delay_us)
     {
         // Move stepper 3
         l293d_step_forward(&stepper3, delay_us, num_steps);
+        sleep_ms(1);
     }
     else
     {
@@ -266,14 +323,20 @@ void move_7(int num_steps, int delay_us)
     // Move steppers 0 and 1 to lower limit
     while (sensor_values[0] > TENSION_LOWER_LIMIT || sensor_values[1] > TENSION_LOWER_LIMIT)
     {
+        if(sensor_values[0] < TENSION_LOWER_LIMIT && sensor_values[1] < TENSION_LOWER_LIMIT){
+            break;
+        }
+
         if (sensor_values[0] > TENSION_LOWER_LIMIT)
         {
             l293d_step_backward(&stepper0, REVERSE_DELAY, 1);
+            sleep_ms(1);
         }
 
         if (sensor_values[1] > TENSION_LOWER_LIMIT)
         {
             l293d_step_backward(&stepper1, REVERSE_DELAY, 1);
+            sleep_ms(1);
         }
     }
 
@@ -287,18 +350,21 @@ void move_7(int num_steps, int delay_us)
         // printf("Move 7\n");
         l293d_step_forward(&stepper2, delay_us, num_steps);
         l293d_step_forward(&stepper3, delay_us, num_steps);
+        sleep_ms(1);
     }
     else if (sensor_values[2] < TENSION_UPPER_LIMIT)
     {
         // Move stepper 2
         // printf("Move 7: Stepper 3 stalled\n");
         l293d_step_forward(&stepper2, delay_us, num_steps);
+        sleep_ms(1);
     }
     else if (sensor_values[3] < TENSION_UPPER_LIMIT)
     {
         // Move stepper 3
         // printf("Move 7: Stepper 2 stalled\n");
         l293d_step_forward(&stepper3, delay_us, num_steps);
+        sleep_ms(1);
     }
     else
     {
@@ -316,7 +382,12 @@ void move_8(int num_steps, int delay_us)
     // Move stepper 0 to lower limit
     while (sensor_values[0] > TENSION_LOWER_LIMIT)
     {
+        if(sensor_values[0] < TENSION_LOWER_LIMIT){
+            break;
+        }
+
         l293d_step_backward(&stepper0, REVERSE_DELAY, 1);
+        sleep_ms(1);
     }
 
     l293d_stop(&stepper0);
@@ -326,6 +397,7 @@ void move_8(int num_steps, int delay_us)
     {
         // Move stepper 2
         l293d_step_forward(&stepper2, delay_us, num_steps);
+        sleep_ms(1);
     }
     else
     {
@@ -336,7 +408,7 @@ void move_8(int num_steps, int delay_us)
 void move(int num_steps, int delay_us, int x, int y)
 {
     // Combine x and y into a single move code
-    int move_code = (x + 1) * 3 + (y + 1);
+    volatile int move_code = (x + 1) * 3 + (y + 1);
 
     for (int i = 0; i < num_steps; i++)
     {

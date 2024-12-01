@@ -1,39 +1,65 @@
 #include "uart_rx.h"
+#include <string.h> // For strstr
 
 void uart_rx_task()
 {
-    char rx_buffer[BUFFER_SIZE];
-    int buffer_index = 0;
+    static char rx_buffer[BUFFER_SIZE] = {0}; // Buffer to store received characters
+    static int buffer_index = 0;             // Current index in the buffer
 
-    // while (true)
-    // {
-        // Check if there is data available to read
-        if (uart_is_readable(UART_ID))
+    // Check if data is available to read
+    if (uart_is_readable(UART_ID))
+    {
+        // Read a character from UART
+        char ch = uart_getc(UART_ID);
+        // printf("Received char: '%c' (ASCII: %d)\n", ch, ch); // Debug each character
+        uart_putc(UART_ID, ch);                              // Echo the character back
+
+        // Append the character to the buffer
+        if (buffer_index < BUFFER_SIZE - 1)
         {
-            // Read a character from the UART
-            char ch = uart_getc(UART_ID);
-            // Echo the received character back to the UART
-            uart_putc(UART_ID, ch);
+            rx_buffer[buffer_index++] = ch;
+            rx_buffer[buffer_index] = '\0'; // Null-terminate after appending
+            // printf("Updated rx_buffer: '%s'\n", rx_buffer); // Debug updated buffer
+        }
+        else
+        {
+            // Buffer overflow handling
+            // printf("Buffer overflow. Resetting index.\n");
+            buffer_index = 0;
+            memset(rx_buffer, 0, sizeof(rx_buffer)); // Clear the buffer
+        }
 
-            // Check for newline character
-            if (ch == '\n')
+        // Check for newline (end of command)
+        if (ch == '\n')
+        {
+            // printf("Debug raw rx_buffer: '%s'\n", rx_buffer);
+
+            // Trim trailing whitespace (e.g., \n, \r)
+            int i = buffer_index - 1;
+            while (i >= 0 && (rx_buffer[i] == '\n' || rx_buffer[i] == '\r'))
             {
-                // Null-terminate the string
-                rx_buffer[buffer_index] = '\0';
-                // Print the received string to the console
-                printf("Received string: %s\n", rx_buffer);
+                rx_buffer[i] = '\0';
+                i--;
+            }
 
-                // Parse the received string
+            // printf("Debug trimmed rx_buffer: '%s'\n", rx_buffer);
+
+            // Look for the "Move" substring in the received command
+            char *start_of_command = strstr(rx_buffer, "Move[");
+            if (start_of_command != NULL)
+            {
                 int x, y;
-                if (sscanf(rx_buffer, "Move[%d,%d]", &x, &y) == 2)
+                // Parse the values of x and y, ignoring trailing characters
+                if (sscanf(start_of_command, "Move[%d,%d", &x, &y) == 2)
                 {
-                    // Check if x and y are valid values (+1, -1, or 0)
+                    printf("Parsed successfully: x = %d, y = %d\n", x, y);
+
+                    // Check validity of x and y values
                     if ((x == 1 || x == -1 || x == 0) && (y == 1 || y == -1 || y == 0))
                     {
-                        // Call the move function with the parsed values
-                        // move(x, y);
-                        printf("Moving with x = %d, y = %d\n", x, y);
-                        move(100, 3000, x, y);
+                        // Call the move function
+                        // move(10, 3000, x, y);
+                        move(15, 4000, x, y);
                     }
                     else
                     {
@@ -42,25 +68,17 @@ void uart_rx_task()
                 }
                 else
                 {
-                    printf("Invalid command format\n");
+                    printf("Found 'Move' but failed to parse values: '%s'\n", start_of_command);
                 }
-
-                // Reset the buffer index for the next command
-                buffer_index = 0;
             }
             else
             {
-                // Store the character in the buffer
-                if (buffer_index < BUFFER_SIZE - 1)
-                {
-                    rx_buffer[buffer_index++] = ch;
-                }
-                else
-                {
-                    // Buffer overflow, reset the buffer index
-                    buffer_index = 0;
-                }
+                printf("No valid 'Move' command found in: '%s'\n", rx_buffer);
             }
-        // }
+
+            // Reset the buffer index for the next command
+            buffer_index = 0;
+            memset(rx_buffer, 0, sizeof(rx_buffer)); // Clear the buffer
+        }
     }
 }

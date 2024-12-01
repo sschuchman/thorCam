@@ -15,17 +15,7 @@
 #define false 0
 #define true 1
 
-void core1_task(){
-    while(true){
-        read_ads111_task();
-        uart_rx_task();
-        sleep_ms(50);
-    }
-}
-
-
-int main()
-{
+void setup(){
     stdio_init_all();
 
     setup_steppers();
@@ -39,55 +29,42 @@ int main()
     ads1115_init(&adc1, I2C_PORT, 0x48);
     ads1115_init(&adc2, I2C_PORT, 0x49);
 
-    calibrate();
-
-    multicore_launch_core1(core1_task);
-
     uart_init(UART_ID, BAUD_RATE);
     gpio_set_function(UART_TX_PIN, GPIO_FUNC_UART);
     gpio_set_function(UART_RX_PIN, GPIO_FUNC_UART);
     uart_set_irq_enables(UART_ID, true, false);
+}
+
+void core1_task(){
+    while(true){
+        read_ads111_task();
+        
+        sleep_ms(10);
+    }
+}
 
 
+int main()
+{
+    setup();
 
-    // uart_rx_task();
-    // multicore_launch_core1(uart_rx_task);
+    calibrate();
+
+    multicore_launch_core1(core1_task);
 
     while (true)
     {
-        int delay = 4;
+        uart_rx_task();
 
-        // Move 0, +Y
-        printf("Move 0, +Y\n");
-        for (int i = 0; i < 1000; i++)
-        {
-            move(1, FORWARD_DELAY, 0, 1);
-            sleep_ms(delay);
-        }
+        // for(int i=0; i<1000; i++){
+        //     move(1, 1000, 0, 1);
+        //     sleep_ms(10);
+        // }
 
-        // Move 0, -Y
-        printf("Move 0, -Y\n");
-        for (int i = 0; i < 1000; i++)
-        {
-            move(1, FORWARD_DELAY, 0, -1);
-            sleep_ms(delay);
-        }
-
-        // Move +X, 0
-        printf("Move +X, 0\n");
-        for (int i = 0; i < FORWARD_DELAY; i++)
-        {
-            move(1, FORWARD_DELAY, 1, 0);
-            sleep_ms(delay);
-        }
-
-        // Move -X, 0
-        printf("Move -X, 0\n");
-        for (int i = 0; i < 1000; i++)
-        {
-            move(1, FORWARD_DELAY, -1, 0);
-            sleep_ms(delay);
-        }
+        // for(int i=0; i<1000; i++){
+        //     move(1, 1000, 0, -1);
+        //     sleep_ms(10);
+        // }
     }
 
     return 0;
