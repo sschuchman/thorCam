@@ -6,184 +6,274 @@
     <title>Thor Controller</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        body {
-            background-color: #121212;
-            color: #ffffff;
+        /* General Body Styling */
+        body, html {
+            margin: 0;
+            padding: 0;
             font-family: Arial, sans-serif;
+            background-color: #f8f9fa;
+            height: 100%;
+            overflow: hidden;
+        }
+
+        h1 {
+            text-align: center;
+            margin: 5px 0;
+            font-size: 1.5rem;
+            color: #333;
         }
 
         .container {
             display: flex;
-            flex-direction: column;
-            gap: 20px;
-            padding: 20px;
+            flex-direction: row;
+            gap: 10px;
+            height: calc(100% - 40px); /* Subtract space for the header */
+            padding: 10px;
+            box-sizing: border-box;
         }
 
-        .video-row, .bottom-row {
+        .left-column {
             display: flex;
-            justify-content: space-between;
-            width: 100%;
+            flex-direction: column;
+            gap: 10px;
+            flex: 2; /* Take up more space for live feeds */
         }
 
+        .right-column {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            flex: 1; /* Reduced space for logs and charts */
+        }
+
+        /* Live Camera and Mask Feed Styling */
         .video-feed, .mask-feed {
             flex: 1;
-            margin: 10px;
+            background-color: #fff;
+            padding: 10px;
+            border-radius: 5px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
             display: flex;
             flex-direction: column;
+            justify-content: center;
             align-items: center;
         }
 
         .video-feed img, .mask-feed img {
             width: 100%;
-            height: auto;
-            max-height: 400px; /* Set a maximum height for both feeds */
-            max-width: 80%;
+            height: 100%;
+            object-fit: contain;
+            border-radius: 5px;
         }
 
-        .log-output, .sensor-chart, .controller {
-            flex: 1;
-            margin: 10px;
-            background-color: #1e1e1e;
-            border: 1px solid #333;
+        /* Styled Toggle Switch */
+        .toggle-container {
+            text-align: center;
             padding: 10px;
-            display: flex;
-            flex-direction: column;
         }
 
-        .log-output {
-            height: 400px;
+        .toggle-container label {
+            display: inline-flex;
+            align-items: center;
+            font-size: 1rem;
+            color: #333;
+            gap: 10px;
+        }
+
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 50px;
+            height: 24px;
+        }
+
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: 0.4s;
+            border-radius: 24px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 18px;
+            width: 18px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: 0.4s;
+            border-radius: 50%;
+        }
+
+        input:checked + .slider {
+            background-color: #007bff;
+        }
+
+        input:checked + .slider:before {
+            transform: translateX(26px);
+        }
+
+        /* Log Output and Sensor Chart */
+        .log-output, .sensor-chart {
+            flex: 1;
+            background-color: #fff;
+            padding: 10px;
+            border-radius: 5px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            display: none; /* Initially hidden for toggle functionality */
             overflow-y: auto;
         }
 
-        .sensor-chart {
-            height: 90%;
+        #log_output {
+            font-size: 0.85rem;
+            line-height: 1.2;
+            overflow-y: auto;
+            height: 100%;
         }
 
-        .controls-bar {
-            background-color: #1e1e1e;
-            border: 1px solid #333;
-            padding: 20px;
+        .sensor-chart canvas {
+            width: 100%;
+            height: 100%;
         }
 
-        select, input[type="range"] {
-            background-color: #444;
-            border: 1px solid #555;
-            color: #fff;
-        }
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .container {
+                flex-direction: column;
+            }
 
-        h1, h2, h3 {
-            color: #ffffff;
-        }
+            .left-column, .right-column {
+                flex: 1;
+            }
 
-        label {
-            color: #ffffff;
+            .video-feed, .mask-feed {
+                height: 25%;
+            }
         }
-
-        .controller {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
-
-        .controller button {
-            background-color: #444;
-            border: 1px solid #555;
-            color: #fff;
-            padding: 10px;
-            margin: 5px;
-            cursor: pointer;
-        }
-
-        .controller-row {
-            display: flex;
-            justify-content: center;
-        }
-
-        .highlight {
-        background-color: yellow; /* Visual highlight color */
-        color: black;
-    }
-</style>
     </style>
 </head>
 <body>
-    <h1>Thor Controller</h1>
     <div class="container">
-        <!-- Video Row -->
-        <div class="video-row">
+        <!-- Left Column -->
+        <div class="left-column">
             <div class="video-feed">
-                <h2>Live Camera Feed</h2>
                 <img src="{{ url_for('video_feed') }}" alt="Live Camera Feed">
             </div>
-
-            <div class="mask-feed">
-                <h2>Mask Feed</h2>
-                <img src="{{ url_for('mask_feed') }}" alt="Mask Feed">
-            </div>
-        </div>
-
-        <!-- Bottom Row -->
-        <div class="bottom-row">
-            <!-- Log Output -->
-            <div class="log-output">
-                <h2>Log Output</h2>
-                <div id="log_output"></div>
-            </div>
-
-            <!-- Sensor Bar Chart -->
-            <div class="sensor-chart">
-                <h3>Sensor Bar Chart</h3>
-                <canvas id="sensorBarChart" width="400" height="200"></canvas>
-            </div>
-
-            <!-- Controller -->
-            <div class="controller">
-                <div class="controller">
-                    <div class="controller-row">
-                        <button id="up_button">Up</button>
+            <div class="controls-bar">
+                <div>
+                    <h3>Movement Controls</h3>
+                    <div>
+                        <button id="up_button" onclick="sendMoveCommand(0, 1)">Up</button>
+                        <button id="down_button" onclick="sendMoveCommand(0, -1)">Down</button>
+                        <button id="left_button" onclick="sendMoveCommand(-1, 0)">Left</button>
+                        <button id="right_button" onclick="sendMoveCommand(1, 0)">Right</button>
                     </div>
-                    <div class="controller-row">
-                        <button id="left_button">Left</button>
-                        <button id="right_button">Right</button>
-                    </div>
-                    <div class="controller-row">
-                        <button id="down_button">Down</button>
-                    </div>
+                </div>
+                <div class="toggle-container">
+                    <label>
+                        <span>Control Mode</span>
+                        <div class="switch">
+                            <input type="checkbox" id="controlModeToggle" onchange="toggleControlMode()">
+                            <span class="slider"></span>
+                        </div>
+                    </label>
                 </div>
                 
             </div>
         </div>
 
-        <!-- Controls Bar -->
-        <div class="controls-bar">
-            <div>
-                <h3>Select Target Color</h3>
-                <label>Hue: 
-                    <input type="range" id="hue_slider" min="0" max="360" step="1" oninput="updateColorPreview()">
-                    <input type="number" id="hue_value" min="0" max="360" value="0" oninput="updateSliderFromInput('hue')">
-                </label>
-                <br>
-                <label>Saturation: 
-                    <input type="range" id="saturation_slider" min="0" max="100" step="1" oninput="updateColorPreview()">
-                    <input type="number" id="saturation_value" min="0" max="100" value="100" oninput="updateSliderFromInput('saturation')">
-                </label>
-                <br>
-                <label>Lightness: 
-                    <input type="range" id="lightness_slider" min="0" max="100" step="1" oninput="updateColorPreview()">
-                    <input type="number" id="lightness_value" min="0" max="100" value="50" oninput="updateSliderFromInput('lightness')">
-                </label>
-                <div id="color_preview" style="width: 50px; height: 50px; background-color: hsl(0, 100%, 50%); border: 1px solid #555;"></div>
+        <!-- Right Column -->
+        <div class="right-column">
+            <div class="mask-feed">
+                <img src="{{ url_for('mask_feed') }}" alt="Mask Feed">
             </div>
-            <div>
-                <h3>Color Detection Threshold</h3>
-                <label>Threshold Width: 
-                    <input type="range" id="threshold_width" min="0" max="100" value="30" oninput="updateThresholdPreview()">
-                    <span id="threshold_value">30</span>
+            <div class="toggle-container">
+                <label>
+                    <span>Log Output</span>
+                    <div class="switch">
+                        <input type="checkbox" id="toggleSwitch" onchange="toggleView()">
+                        <span class="slider"></span>
+                    </div>
                 </label>
             </div>
+            <div id="log_output" class="log-output">
+                <!-- Log content will be loaded dynamically -->
+            </div>
+            <div id="sensor_chart" class="sensor-chart">
+                <canvas id="sensorBarChart"></canvas>
+            </div>
+        </div>
     </div>
 
+
     <script>
+        // Default state shows the sensor chart
+        document.addEventListener('DOMContentLoaded', function () {
+            document.getElementById('sensor_chart').style.display = 'block'; // Show chart by default
+            document.getElementById('log_output').style.display = 'none';   // Hide log by default
+
+            // Initialize Chart
+            const ctx = document.getElementById('sensorBarChart').getContext('2d');
+            const sensorBarChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['Sensor 1', 'Sensor 2', 'Sensor 3', 'Sensor 4'],
+                    datasets: [{
+                        label: 'Sensor Values',
+                        data: [0, 0, 0, 0],
+                        backgroundColor: ['rgba(255, 99, 132, 0.2)', 'rgba(54, 162, 235, 0.2)', 'rgba(255, 206, 86, 0.2)', 'rgba(75, 192, 192, 0.2)'],
+                        borderColor: ['rgba(255, 99, 132, 1)', 'rgba(54, 162, 235, 1)', 'rgba(255, 206, 86, 1)', 'rgba(75, 192, 192, 1)'],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 300
+                        }
+                    }
+                }
+            });
+
+            // Fetch sensor values
+            setInterval(() => {
+                fetch('/sensor_values')
+                    .then(response => response.json())
+                    .then(data => {
+                        sensorBarChart.data.datasets[0].data = data.sensor_values;
+                        sensorBarChart.update();
+                    });
+            }, 100);
+        });
+
+        // Toggle between log output and sensor chart
+        function toggleView() {
+            const logOutput = document.getElementById('log_output');
+            const sensorChart = document.getElementById('sensor_chart');
+            const toggleSwitch = document.getElementById('toggleSwitch');
+
+            if (toggleSwitch.checked) {
+                logOutput.style.display = 'block';
+                sensorChart.style.display = 'none';
+            } else {
+                logOutput.style.display = 'none';
+                sensorChart.style.display = 'block';
+            }
+        }
+
         function fetchLogs() {
             fetch("{{ url_for('log_feed') }}")
                 .then(response => response.text())
@@ -193,7 +283,7 @@
                     logOutput.scrollTop = logOutput.scrollHeight;
                 });
         }
-        setInterval(fetchLogs, 500);
+        setInterval(fetchLogs, 100);
 
         function updateBrightness() {
             const slider = document.getElementById("brightness");
@@ -207,7 +297,7 @@
             });
         }
 
-        function updateThresholdPreview() {
+    function updateThresholdPreview() {
         const thresholdSlider = document.getElementById("threshold_width");
         const thresholdValue = document.getElementById("threshold_value");
         thresholdValue.innerHTML = thresholdSlider.value;
@@ -355,7 +445,11 @@ function hslToRgb(h, s, l) {
             }
         });
 
+        let moveCooldown = false;
         function sendMoveCommand(x, y) {
+            if (moveCooldown) return;
+            moveCooldown = true;
+
             fetch('/move', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -363,8 +457,25 @@ function hslToRgb(h, s, l) {
             })
             .then(response => response.json())
             .then(data => console.log(`Action: ${data.action}`))
-            .catch(error => console.error('Error sending move command:', error));
+            .catch(error => console.error('Error sending move command:', error))
+            .finally(() => {
+                setTimeout(() => moveCooldown = false, 200); // 200ms delay
+            });
         }
+
+        document.addEventListener('keydown', (event) => {
+            const key = event.key.toLowerCase();
+            if (key === 'w') sendMoveCommand(0, 1); // Up
+            if (key === 's') sendMoveCommand(0, -1); // Down
+            if (key === 'a') sendMoveCommand(-1, 0); // Left
+            if (key === 'd') sendMoveCommand(1, 0); // Right
+        });
+
+        document.addEventListener('keyup', (event) => {
+            sendMoveCommand(0, 0); // Stop on release
+        });
+
+
 
     document.getElementById('up_button').addEventListener('mousedown', () => {
             sendMoveCommand(0, 1);
@@ -409,6 +520,19 @@ function hslToRgb(h, s, l) {
         document.getElementById('right_button').addEventListener('mouseleave', () => {
             document.getElementById('right_button').classList.remove('highlight');
         });
+
+        function toggleControlMode() {
+        const controlMode = document.getElementById("controlModeToggle").checked ? "automatic" : "manual";
+
+        fetch('/update_control_mode', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ control_mode: controlMode })
+        })
+        .then(response => response.json())
+        .then(data => console.log(`Control mode set to: ${data.control_mode}`))
+        .catch(error => console.error('Error updating control mode:', error));
+    }
     </script>
 </body>
 </html>

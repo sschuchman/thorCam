@@ -47,6 +47,9 @@ color_ranges = {
 }
 lower_hue, upper_hue = color_ranges[selected_color][0][0], color_ranges[selected_color][1][0]  # Default slider values
 
+control_mode = "manual"  # Default control mode is manual
+threshold = 10  # Threshold for dx and dy for automatic control
+
 
 def generate_log_data():
     """Thread for continuous UART log reading."""
@@ -113,28 +116,25 @@ def video_feed():
 
 # Function to generate mask feed with color detection, overlay, and FPS tracking
 def generate_mask_feed():
-    """Capture and process low-resolution frames for mask feed with selected color detection."""
+    global control_mode, threshold
     mask_start_time = time.time()
     mask_frame_count = 0
-    
+
     while True:
         frame = picam2.capture_array()
         small_frame = cv2.resize(frame, MASK_RESOLUTION)
         hsv_frame = cv2.cvtColor(small_frame, cv2.COLOR_RGB2HSV)
         hsv_frame[:, :, 2] = np.clip(hsv_frame[:, :, 2] + brightness_increase, 0, 255)
 
-        # Set color range based on selected color and adjusted sliders
         lower_bound = np.array([lower_hue, 100, 100])
         upper_bound = np.array([upper_hue, 255, 255])
-        
+
         mask = cv2.inRange(hsv_frame, lower_bound, upper_bound)
         mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernel, iterations=1)
         mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, kernel, iterations=1)
 
-        # Convert mask to BGR to allow color overlay
         mask_colored = cv2.cvtColor(mask, cv2.COLOR_GRAY2BGR)
 
-        # Find contours and overlay bounding box and line in specified colors
         contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
         if contours:
             largest_contour = max(contours, key=cv2.contourArea)
@@ -142,30 +142,32 @@ def generate_mask_feed():
                 x, y, w, h = cv2.boundingRect(largest_contour)
                 object_center = (x + w // 2, y + h // 2)
 
-                # Center of the screen (for MASK_RESOLUTION)
                 screen_center = (MASK_RESOLUTION[0] // 2, MASK_RESOLUTION[1] // 2)
-
-                # Calculate x and y components of distance and total distance
                 dx = object_center[0] - screen_center[0]
                 dy = -(object_center[1] - screen_center[1])
                 distance = int(math.sqrt(dx ** 2 + dy ** 2))
 
-                # Draw yellow bounding box and blue line
-                cv2.rectangle(mask_colored, (x, y), (x + w, y + h), (0, 255, 255), 2)  # Yellow bounding box
-                cv2.line(mask_colored, screen_center, object_center, (255, 0, 0), 2)  # Blue line to center
+                cv2.rectangle(mask_colored, (x, y), (x + w, y + h), (0, 255, 255), 2)
+                cv2.line(mask_colored, screen_center, object_center, (255, 0, 0), 2)
 
-                # Display distance and components on mask
                 cv2.putText(mask_colored, f"Distance: {distance}", (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 2)
                 cv2.putText(mask_colored, f"dx: {dx}", (10, 60), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 2)
                 cv2.putText(mask_colored, f"dy: {dy}", (10, 90), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 2)
 
-        # Calculate FPS and SPF for mask feed
+                if control_mode == "automatic":
+                    x_command = 1 if dx > threshold else -1 if dx < -threshold else 0
+                    y_command = 1 if dy > threshold else -1 if dy < -threshold else 0
+
+                    if ser:
+                        command = f"Move[{x_command},{y_command}]\n"
+                        ser.write(command.encode('utf-8'))
+                        print(f"Sent command: {command.strip()}")
+
         mask_frame_count += 1
         elapsed_time = time.time() - mask_start_time
         mask_fps = mask_frame_count / elapsed_time if elapsed_time > 0 else 0
         mask_spf = elapsed_time / mask_frame_count if mask_frame_count > 0 else 0
 
-        # Display FPS and SPF in the top right corner of mask
         cv2.putText(mask_colored, f"FPS: {mask_fps:.2f}", (200, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 2)
         cv2.putText(mask_colored, f"SPF: {mask_spf:.4f}s", (200, 60), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 2)
 
@@ -173,6 +175,7 @@ def generate_mask_feed():
         if ret:
             yield (b'--frame\r\n'
                    b'Content-Type: image/jpeg\r\n\r\n' + buffer.tobytes() + b'\r\n')
+
 
 @app.route('/mask_feed')
 def mask_feed():
@@ -230,7 +233,10 @@ def log_feed():
 
 @app.route('/move', methods=['POST'])
 def move():
-    """Send move(x, y) command over UART."""
+    global control_mode
+    if control_mode != "manual":
+        return jsonify(success=False, error="Cannot send manual commands in automatic mode.")
+
     data = request.json
     x = int(data.get('x', 0))
     y = int(data.get('y', 0))
@@ -243,6 +249,17 @@ def move():
     else:
         print(f"UART not initialized. Failed to send command: {command.strip()}")
         return jsonify(success=False, error="UART not initialized.")
+    
+    
+@app.route('/update_control_mode', methods=['POST'])
+def update_control_mode():
+    global control_mode
+    data = request.json
+    control_mode = data.get('control_mode', 'manual')
+    return jsonify(success=True, control_mode=control_mode)
+
+    
+    
 
 
 if __name__ == '__main__':
