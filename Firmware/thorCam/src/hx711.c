@@ -1,3 +1,7 @@
+/*
+    FILE UNUSED IN PROJECT
+*/
+
 #include "hx711.h"
 #include "pico/stdlib.h"
 #include "hardware/gpio.h"
