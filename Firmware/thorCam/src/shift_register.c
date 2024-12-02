@@ -1,3 +1,7 @@
+/*
+    FILE UNUSED IN PROJECT
+*/
+
 #include "shift_register.h"
 
 void shift_register_init(void) {
