@@ -11,18 +11,19 @@
             margin: 0;
             padding: 0;
             font-family: Arial, sans-serif;
-            background-color: #f8f9fa;
+            background-color: #121212; /* Dark background */
+            color: #e0e0e0; /* Light text color */
             height: 100%;
             overflow: hidden;
         }
-
+    
         h1 {
             text-align: center;
             margin: 5px 0;
             font-size: 1.5rem;
-            color: #333;
+            color: #e0e0e0; /* Light text color */
         }
-
+    
         .container {
             display: flex;
             flex-direction: row;
@@ -31,68 +32,78 @@
             padding: 10px;
             box-sizing: border-box;
         }
-
+    
         .left-column {
             display: flex;
             flex-direction: column;
             gap: 10px;
             flex: 2; /* Take up more space for live feeds */
         }
-
+    
         .right-column {
             display: flex;
             flex-direction: column;
             gap: 10px;
             flex: 1; /* Reduced space for logs and charts */
         }
-
+    
+        .container, .left-column, .right-column {
+            background-color: #1e1e1e; /* Darker background for containers */
+            border: 1px solid #333; /* Border to separate sections */
+        }
+    
         /* Live Camera and Mask Feed Styling */
         .video-feed, .mask-feed {
             flex: 1;
-            background-color: #fff;
+            background-color: #333; /* Dark background for feeds */
+            color: #e0e0e0; /* Light text color */
             padding: 10px;
             border-radius: 5px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.5); /* Darker shadow */
         }
-
+    
         .video-feed img, .mask-feed img {
             width: 100%;
             height: 100%;
             object-fit: contain;
             border-radius: 5px;
         }
-
+    
+        .log, .chart {
+            background-color: #333; /* Dark background for logs and charts */
+            color: #e0e0e0; /* Light text color */
+            padding: 10px;
+            border-radius: 5px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.5); /* Darker shadow */
+        }
+    
         /* Styled Toggle Switch */
         .toggle-container {
             text-align: center;
             padding: 10px;
         }
-
+    
         .toggle-container label {
             display: inline-flex;
             align-items: center;
             font-size: 1rem;
-            color: #333;
+            color: #e0e0e0; /* Light text color */
             gap: 10px;
         }
-
+    
         .switch {
             position: relative;
             display: inline-block;
             width: 50px;
             height: 24px;
         }
-
+    
         .switch input {
             opacity: 0;
             width: 0;
             height: 0;
         }
-
+    
         .slider {
             position: absolute;
             cursor: pointer;
@@ -104,7 +115,7 @@
             transition: 0.4s;
             border-radius: 24px;
         }
-
+    
         .slider:before {
             position: absolute;
             content: "";
@@ -116,50 +127,43 @@
             transition: 0.4s;
             border-radius: 50%;
         }
-
+    
         input:checked + .slider {
             background-color: #007bff;
         }
-
+    
         input:checked + .slider:before {
             transform: translateX(26px);
         }
-
+    
         /* Log Output and Sensor Chart */
         .log-output, .sensor-chart {
             flex: 1;
-            background-color: #fff;
+            background-color: #333; /* Dark background */
+            color: #e0e0e0; /* Light text color */
             padding: 10px;
             border-radius: 5px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.5); /* Darker shadow */
             display: none; /* Initially hidden for toggle functionality */
             overflow-y: auto;
         }
-
+    
         #log_output {
             font-size: 0.85rem;
             line-height: 1.2;
             overflow-y: auto;
             height: 100%;
         }
-
+    
         .sensor-chart canvas {
             width: 100%;
             height: 100%;
         }
-
+    
         /* Responsive Design */
         @media (max-width: 768px) {
             .container {
                 flex-direction: column;
-            }
-
-            .left-column, .right-column {
-                flex: 1;
-            }
-
-            .video-feed, .mask-feed {
-                height: 25%;
             }
         }
     </style>

@@ -155,7 +155,7 @@ def generate_mask_feed():
                 cv2.putText(mask_colored, f"dy: {dy}", (10, 90), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 2)
 
                 if control_mode == "automatic":
-                    x_command = 1 if dx > threshold else -1 if dx < -threshold else 0
+                    x_command = -(1 if dx > threshold else -1 if dx < -threshold else 0)
                     y_command = 1 if dy > threshold else -1 if dy < -threshold else 0
 
                     if ser:
@@ -258,8 +258,6 @@ def update_control_mode():
     control_mode = data.get('control_mode', 'manual')
     return jsonify(success=True, control_mode=control_mode)
 
-    
-    
 
 
 if __name__ == '__main__':
