@@ -38,7 +38,7 @@ The firmware leverages a modular structure, with functionalities like motor cont
     - UART (GPIO0, GPIO1) for communication with the Raspberry Pi 5.
 
 ### Build and Flash
-1. Clone the repository and open the `Firmware` folder in Visual Studio Code.
+1. Clone the repository and open the `thorCam` folder in Visual Studio Code.
 2. Build the firmware using the Pico extension's build tools.
 3. Flash the firmware to the Raspberry Pi Pico using the Pico Debug Probe.
 
