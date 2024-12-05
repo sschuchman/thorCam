@@ -1,246 +1,359 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Thor Controller</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <style>
-        /* General Body Styling */
-        body, html {
-            margin: 0;
-            padding: 0;
-            font-family: Arial, sans-serif;
-            background-color: #121212; /* Dark background */
-            color: #e0e0e0; /* Light text color */
-            height: 100%;
-            overflow: hidden;
-        }
-    
-        h1 {
-            text-align: center;
-            margin: 5px 0;
-            font-size: 1.5rem;
-            color: #e0e0e0; /* Light text color */
-        }
-    
-        .container {
-            display: flex;
-            flex-direction: row;
-            gap: 10px;
-            height: calc(100% - 40px); /* Subtract space for the header */
-            padding: 10px;
-            box-sizing: border-box;
-        }
-    
-        .left-column {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            flex: 2; /* Take up more space for live feeds */
-        }
-    
-        .right-column {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            flex: 1; /* Reduced space for logs and charts */
-        }
-    
-        .container, .left-column, .right-column {
-            background-color: #1e1e1e; /* Darker background for containers */
-            border: 1px solid #333; /* Border to separate sections */
-        }
-    
-        /* Live Camera and Mask Feed Styling */
-        .video-feed, .mask-feed {
-            flex: 1;
-            background-color: #333; /* Dark background for feeds */
-            color: #e0e0e0; /* Light text color */
-            padding: 10px;
-            border-radius: 5px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.5); /* Darker shadow */
-        }
-    
-        .video-feed img, .mask-feed img {
-            width: 100%;
-            height: 100%;
-            object-fit: contain;
-            border-radius: 5px;
-        }
-    
-        .log, .chart {
-            background-color: #333; /* Dark background for logs and charts */
-            color: #e0e0e0; /* Light text color */
-            padding: 10px;
-            border-radius: 5px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.5); /* Darker shadow */
-        }
-    
-        /* Styled Toggle Switch */
-        .toggle-container {
-            text-align: center;
-            padding: 10px;
-        }
-    
-        .toggle-container label {
-            display: inline-flex;
-            align-items: center;
-            font-size: 1rem;
-            color: #e0e0e0; /* Light text color */
-            gap: 10px;
-        }
-    
-        .switch {
-            position: relative;
-            display: inline-block;
-            width: 50px;
-            height: 24px;
-        }
-    
-        .switch input {
-            opacity: 0;
-            width: 0;
-            height: 0;
-        }
-    
-        .slider {
-            position: absolute;
-            cursor: pointer;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background-color: #ccc;
-            transition: 0.4s;
-            border-radius: 24px;
-        }
-    
-        .slider:before {
-            position: absolute;
-            content: "";
-            height: 18px;
-            width: 18px;
-            left: 3px;
-            bottom: 3px;
-            background-color: white;
-            transition: 0.4s;
-            border-radius: 50%;
-        }
-    
-        input:checked + .slider {
-            background-color: #007bff;
-        }
-    
-        input:checked + .slider:before {
-            transform: translateX(26px);
-        }
-    
-        /* Log Output and Sensor Chart */
-        .log-output, .sensor-chart {
-            flex: 1;
-            background-color: #333; /* Dark background */
-            color: #e0e0e0; /* Light text color */
-            padding: 10px;
-            border-radius: 5px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.5); /* Darker shadow */
-            display: none; /* Initially hidden for toggle functionality */
-            overflow-y: auto;
-        }
-    
-        #log_output {
-            font-size: 0.85rem;
-            line-height: 1.2;
-            overflow-y: auto;
-            height: 100%;
-        }
-    
-        .sensor-chart canvas {
-            width: 100%;
-            height: 100%;
-        }
-    
-        /* Responsive Design */
-        @media (max-width: 768px) {
-            .container {
-                flex-direction: column;
-            }
-        }
-    </style>
 </head>
+
+<style>
+    /* General Body Styling */
+    body,
+    html {
+        margin: 0;
+        padding: 0;
+        font-family: Arial, sans-serif;
+        background-color: #121212;
+        color: #e0e0e0;
+        height: 100%;
+        overflow: hidden;
+    }
+
+    h1 {
+        text-align: center;
+        margin: 5px 0;
+        font-size: 1.5rem;
+        color: #e0e0e0;
+    }
+
+    .header {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background-color: #1e1e1e;
+        padding: 10px 20px;
+        border-bottom: 2px solid #333;
+        gap: 20px;
+    }
+
+    .header img {
+        height: 60px;
+        object-fit: contain;
+    }
+
+    .header h1 {
+        margin: 0;
+        font-size: 2rem;
+        font-weight: bold;
+        color: #e0e0e0;
+    }
+
+    @media (max-width: 768px) {
+        .header {
+            flex-direction: column;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 1.5rem;
+        }
+
+        .header img {
+            height: 50px;
+        }
+    }
+
+    .container {
+        display: flex;
+        flex-direction: row;
+        gap: 10px;
+        height: calc(100% - 80px);
+        padding: 10px;
+        box-sizing: border-box;
+    }
+
+    .left-column {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        flex: 2;
+        overflow: hidden;
+    }
+
+    .video-feed {
+        flex: 1 1 auto;
+        height: 70%;
+        background-color: #333;
+        color: #e0e0e0;
+        padding: 10px;
+        border-radius: 5px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+    }
+
+    .video-feed img {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+        border-radius: 5px;
+    }
+
+    .controls-bar {
+        flex: 1 0 auto;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 10px;
+        background-color: #1e1e1e;
+        border: 1px solid #333;
+        border-radius: 5px;
+        min-height: 60px;
+    }
+
+    .movement-controls {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .buttons-container {
+        display: grid;
+        grid-template-rows: auto auto auto;
+        grid-template-columns: auto auto auto;
+        gap: 10px;
+    }
+
+    .buttons-container button {
+        width: 60px;
+        height: 60px;
+        background-color: #333;
+        border: 1px solid #555;
+        color: #e0e0e0;
+        border-radius: 50%;
+        cursor: pointer;
+        transition: background-color 0.2s, transform 0.1s;
+        font-size: 1.5rem;
+    }
+
+    .buttons-container button:hover {
+        background-color: #444;
+    }
+
+    .buttons-container button.disabled {
+        background-color: #555;
+        cursor: not-allowed;
+    }
+
+    .buttons-container button.pressed {
+        background-color: #007bff;
+        transform: scale(0.95);
+    }
+
+    .toggle-container {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+    }
+
+    .toggle-label {
+        font-size: 1rem;
+        color: #e0e0e0;
+    }
+
+    .slider-switch {
+        position: relative;
+        width: 60px;
+        height: 30px;
+    }
+
+    .slider-switch input {
+        opacity: 0;
+        width: 0;
+        height: 0;
+    }
+
+    .slider {
+        position: absolute;
+        cursor: pointer;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: #333;
+        transition: 0.4s;
+        border-radius: 30px;
+    }
+
+    .slider:before {
+        position: absolute;
+        content: "";
+        height: 22px;
+        width: 22px;
+        left: 4px;
+        bottom: 4px;
+        background-color: #fff;
+        transition: 0.4s;
+        border-radius: 50%;
+    }
+
+    input:checked + .slider {
+        background-color: #007bff;
+    }
+
+    input:checked + .slider:before {
+        transform: translateX(30px);
+    }
+
+    .right-column {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        flex: 1;
+    }
+
+    .mask-feed,
+    .sensor-chart {
+        flex: 1;
+        background-color: #333;
+        color: #e0e0e0;
+        padding: 10px;
+        border-radius: 5px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+    }
+
+    .mask-feed img {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+        border-radius: 5px;
+    }
+
+    .sensor-chart canvas {
+        width: 100%;
+        height: 100%;
+    }
+</style>
+
 <body>
     <div class="header">
-        <img src="./static/assets/logo.png" alt="Thor Logo" style="width: 200px;">
+        <img src="./static/assets/logo.png" alt="Thor Logo">
         <h1>Thor Controller</h1>
     </div>
 
     <div class="container">
-        <!-- Left Column -->
         <div class="left-column">
             <div class="video-feed">
                 <img src="{{ url_for('video_feed') }}" alt="Live Camera Feed">
             </div>
             <div class="controls-bar">
-                <div>
-                    <h3>Movement Controls</h3>
-                    <div>
-                        <button id="up_button" onclick="sendMoveCommand(0, 1)">Up</button>
-                        <button id="down_button" onclick="sendMoveCommand(0, -1)">Down</button>
-                        <button id="left_button" onclick="sendMoveCommand(-1, 0)">Left</button>
-                        <button id="right_button" onclick="sendMoveCommand(1, 0)">Right</button>
+                <h1>Controls</h1>
+                <div class="movement-controls">
+                    <div class="buttons-container">
+                        <div></div>
+                        <button id="up_button" onclick="manualControl(0, 1)">↑</button>
+                        <div></div>
+                        <button id="left_button" onclick="manualControl(-1, 0)">←</button>
+                        <div></div>
+                        <button id="right_button" onclick="manualControl(1, 0)">→</button>
+                        <div></div>
+                        <button id="down_button" onclick="manualControl(0, -1)">↓</button>
+                        <div></div>
                     </div>
                 </div>
                 <div class="toggle-container">
-                    <label>
-                        <span>Control Mode</span>
-                        <div class="switch">
-                            <input type="checkbox" id="controlModeToggle" onchange="toggleControlMode()">
-                            <span class="slider"></span>
-                        </div>
+                    <p id="controlModeText" class="toggle-label">Auto</p>
+                    <label class="slider-switch">
+                        <input type="checkbox" id="controlModeToggle" onchange="toggleControlMode()">
+                        <span class="slider"></span>
                     </label>
                 </div>
-                
             </div>
         </div>
 
-        <!-- Right Column -->
         <div class="right-column">
             <div class="mask-feed">
                 <img src="{{ url_for('mask_feed') }}" alt="Mask Feed">
             </div>
-            <div class="toggle-container">
-                <label>
-                    <span>Log Output</span>
-                    <div class="switch">
-                        <input type="checkbox" id="toggleSwitch" onchange="toggleView()">
-                        <span class="slider"></span>
-                    </div>
-                </label>
-            </div>
-            <div id="log_output" class="log-output">
-                <!-- Log content will be loaded dynamically -->
-            </div>
-            <div id="sensor_chart" class="sensor-chart">
+            <div class="sensor-chart">
                 <canvas id="sensorBarChart"></canvas>
             </div>
         </div>
     </div>
 
-
     <script>
-        // Default state shows the sensor chart
-        document.addEventListener('DOMContentLoaded', function () {
-            document.getElementById('sensor_chart').style.display = 'block'; // Show chart by default
-            document.getElementById('log_output').style.display = 'none';   // Hide log by default
+        let controlMode = "Auto";
 
-            // Initialize Chart
+        function manualControl(x, y) {
+            if (controlMode === "Manual") {
+                sendMoveCommand(x, y);
+            }
+        }
+
+        function sendMoveCommand(x, y) {
+            fetch('/move', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ x, y })
+            }).catch(console.error);
+        }
+
+        function toggleControlMode() {
+            controlMode = document.getElementById("controlModeToggle").checked ? "Auto" : "Manual";
+            document.getElementById("controlModeText").textContent = controlMode;
+
+            // Enable or disable buttons based on control mode
+            document.querySelectorAll('.buttons-container button').forEach(button => {
+                if (controlMode === "Manual") {
+                    button.classList.remove('disabled');
+                    button.disabled = false;
+                } else {
+                    button.classList.add('disabled');
+                    button.disabled = true;
+                }
+            });
+        }
+
+        // Animate button presses
+        const keyMap = {
+            w: 'up_button',
+            a: 'left_button',
+            s: 'down_button',
+            d: 'right_button'
+        };
+
+        document.addEventListener('keydown', (e) => {
+            if (keyMap[e.key] && controlMode === "Manual") {
+                const button = document.getElementById(keyMap[e.key]);
+                button.classList.add('pressed');
+                manualControl(...getMovementFromKey(e.key));
+            }
+        });
+
+        document.addEventListener('keyup', (e) => {
+            if (keyMap[e.key]) {
+                const button = document.getElementById(keyMap[e.key]);
+                button.classList.remove('pressed');
+            }
+        });
+
+        function getMovementFromKey(key) {
+            switch (key) {
+                case 'w': return [0, 1];
+                case 'a': return [-1, 0];
+                case 's': return [0, -1];
+                case 'd': return [1, 0];
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', function () {
             const ctx = document.getElementById('sensorBarChart').getContext('2d');
             const sensorBarChart = new Chart(ctx, {
                 type: 'bar',
                 data: {
-                    labels: ['Sensor 1', 'Sensor 2', 'Sensor 3', 'Sensor 4'],
+                    labels: ['Load 1', 'Load 2', 'Load 3', 'Load 4'],
                     datasets: [{
-                        label: 'Sensor Values',
+                        label: 'Tension',
                         data: [0, 0, 0, 0],
                         backgroundColor: ['rgba(255, 99, 132, 0.2)', 'rgba(54, 162, 235, 0.2)', 'rgba(255, 206, 86, 0.2)', 'rgba(75, 192, 192, 0.2)'],
                         borderColor: ['rgba(255, 99, 132, 1)', 'rgba(54, 162, 235, 1)', 'rgba(255, 206, 86, 1)', 'rgba(75, 192, 192, 1)'],
@@ -257,7 +370,6 @@
                 }
             });
 
-            // Fetch sensor values
             setInterval(() => {
                 fetch('/sensor_values')
                     .then(response => response.json())
@@ -267,281 +379,7 @@
                     });
             }, 100);
         });
-
-        // Toggle between log output and sensor chart
-        function toggleView() {
-            const logOutput = document.getElementById('log_output');
-            const sensorChart = document.getElementById('sensor_chart');
-            const toggleSwitch = document.getElementById('toggleSwitch');
-
-            if (toggleSwitch.checked) {
-                logOutput.style.display = 'block';
-                sensorChart.style.display = 'none';
-            } else {
-                logOutput.style.display = 'none';
-                sensorChart.style.display = 'block';
-            }
-        }
-
-        function fetchLogs() {
-            fetch("{{ url_for('log_feed') }}")
-                .then(response => response.text())
-                .then(data => {
-                    const logOutput = document.getElementById("log_output");
-                    logOutput.innerHTML = data.replace(/\n/g, "<br>");
-                    logOutput.scrollTop = logOutput.scrollHeight;
-                });
-        }
-        setInterval(fetchLogs, 100);
-
-        function updateBrightness() {
-            const slider = document.getElementById("brightness");
-            const value = slider.value;
-            document.getElementById("brightness_value").innerHTML = value;
-
-            fetch('/update_brightness', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ brightness: value })
-            });
-        }
-
-    function updateThresholdPreview() {
-        const thresholdSlider = document.getElementById("threshold_width");
-        const thresholdValue = document.getElementById("threshold_value");
-        thresholdValue.innerHTML = thresholdSlider.value;
-    }
-
-    function updateColorPreview() {
-        const hue = document.getElementById("hue_slider").value;
-        const saturation = document.getElementById("saturation_slider").value;
-        const lightness = document.getElementById("lightness_slider").value;
-
-        document.getElementById("hue_value").value = hue;
-        document.getElementById("saturation_value").value = saturation;
-        document.getElementById("lightness_value").value = lightness;
-
-        document.getElementById("color_preview").style.backgroundColor = `hsl(${hue}, ${saturation}%, ${lightness}%)`;
-    }
-
-    function updateSliderFromInput(type) {
-        const slider = document.getElementById(`${type}_slider`);
-        const value = document.getElementById(`${type}_value`).value;
-        slider.value = value;
-        updateColorPreview();
-    }
-
-    function updateBrightness() {
-        const slider = document.getElementById("brightness");
-        const value = slider.value;
-        document.getElementById("brightness_value").innerHTML = value;
-
-        fetch('/update_brightness', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ brightness: value })
-        });
-    }
-
-function hslToRgb(h, s, l) {
-    // Convert HSL (Hue, Saturation, Lightness) to RGB
-    let r, g, b;
-
-    if (s === 0) {
-        r = g = b = l; // Achromatic
-    } else {
-        const hue2rgb = (p, q, t) => {
-            if (t < 0) t += 1;
-            if (t > 1) t -= 1;
-            if (t < 1 / 6) return p + (q - p) * 6 * t;
-            if (t < 1 / 2) return q;
-            if (t < 2 / 3) return p + (q - p) * (2 / 3 - t) * 6;
-            return p;
-        };
-
-        const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
-        const p = 2 * l - q;
-        r = hue2rgb(p, q, h + 1 / 3);
-        g = hue2rgb(p, q, h);
-        b = hue2rgb(p, q, h - 1 / 3);
-    }
-
-    return {
-        r: Math.round(r * 255),
-        g: Math.round(g * 255),
-        b: Math.round(b * 255)
-    };
-}
-
-
-
-        // Bar chart for sensor values
-        document.addEventListener('DOMContentLoaded', function () {
-            const ctx = document.getElementById('sensorBarChart').getContext('2d');
-            const sensorBarChart = new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: ['Sensor 1', 'Sensor 2', 'Sensor 3', 'Sensor 4'],
-                    datasets: [{
-                        label: 'Sensor Values',
-                        data: [0, 0, 0, 0],
-                        backgroundColor: [
-                            'rgba(255, 99, 132, 0.2)',
-                            'rgba(54, 162, 235, 0.2)',
-                            'rgba(255, 206, 86, 0.2)',
-                            'rgba(75, 192, 192, 0.2)'
-                        ],
-                        borderColor: [
-                            'rgba(255, 99, 132, 1)',
-                            'rgba(54, 162, 235, 1)',
-                            'rgba(255, 206, 86, 1)',
-                            'rgba(75, 192, 192, 1)'
-                        ],
-                        borderWidth: 1
-                    }]
-                },
-                options: {
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            max: 300
-                        }
-                    }
-                }
-            });
-
-            function fetchSensorValues() {
-                fetch('/sensor_values')
-                    .then(response => response.json())
-                    .then(data => {
-                        sensorBarChart.data.datasets[0].data = data.sensor_values;
-                        sensorBarChart.update();
-                    })
-                    .catch(error => console.error('Error fetching sensor values:', error));
-            }
-
-            setInterval(fetchSensorValues, 100);
-        });
-
-        function sendCommand(endpoint) {
-        fetch(endpoint, { method: 'POST' })
-            .then(response => response.json())
-            .then(data => console.log(`Action: ${data.action}`))
-            .catch(error => console.error('Error sending command:', error));
-    }
-
-    const keyMap = {
-            'w': { x: 0, y: 1, button: 'up_button' },  // Up
-            's': { x: 0, y: -1, button: 'down_button' }, // Down
-            'a': { x: -1, y: 0, button: 'left_button' }, // Left
-            'd': { x: 1, y: 0, button: 'right_button' }   // Right
-        };
-
-        document.addEventListener('keydown', (event) => {
-            const key = event.key.toLowerCase();
-            if (key in keyMap) {
-                const { x, y, button } = keyMap[key];
-                sendMoveCommand(x, y);
-                document.getElementById(button).classList.add('highlight');
-            }
-        });
-
-        document.addEventListener('keyup', (event) => {
-            const key = event.key.toLowerCase();
-            if (key in keyMap) {
-                const { button } = keyMap[key];
-                document.getElementById(button).classList.remove('highlight');
-            }
-        });
-
-        let moveCooldown = false;
-        function sendMoveCommand(x, y) {
-            if (moveCooldown) return;
-            moveCooldown = true;
-
-            fetch('/move', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ x, y })
-            })
-            .then(response => response.json())
-            .then(data => console.log(`Action: ${data.action}`))
-            .catch(error => console.error('Error sending move command:', error))
-            .finally(() => {
-                setTimeout(() => moveCooldown = false, 200); // 200ms delay
-            });
-        }
-
-        document.addEventListener('keydown', (event) => {
-            const key = event.key.toLowerCase();
-            if (key === 'w') sendMoveCommand(0, 1); // Up
-            if (key === 's') sendMoveCommand(0, -1); // Down
-            if (key === 'a') sendMoveCommand(-1, 0); // Left
-            if (key === 'd') sendMoveCommand(1, 0); // Right
-        });
-
-        document.addEventListener('keyup', (event) => {
-            sendMoveCommand(0, 0); // Stop on release
-        });
-
-
-
-    document.getElementById('up_button').addEventListener('mousedown', () => {
-            sendMoveCommand(0, 1);
-            document.getElementById('up_button').classList.add('highlight');
-        });
-        document.getElementById('up_button').addEventListener('mouseup', () => {
-            document.getElementById('up_button').classList.remove('highlight');
-        });
-        document.getElementById('up_button').addEventListener('mouseleave', () => {
-            document.getElementById('up_button').classList.remove('highlight');
-        });
-
-        document.getElementById('down_button').addEventListener('mousedown', () => {
-            sendMoveCommand(0, -1);
-            document.getElementById('down_button').classList.add('highlight');
-        });
-        document.getElementById('down_button').addEventListener('mouseup', () => {
-            document.getElementById('down_button').classList.remove('highlight');
-        });
-        document.getElementById('down_button').addEventListener('mouseleave', () => {
-            document.getElementById('down_button').classList.remove('highlight');
-        });
-
-        document.getElementById('left_button').addEventListener('mousedown', () => {
-            sendMoveCommand(-1, 0);
-            document.getElementById('left_button').classList.add('highlight');
-        });
-        document.getElementById('left_button').addEventListener('mouseup', () => {
-            document.getElementById('left_button').classList.remove('highlight');
-        });
-        document.getElementById('left_button').addEventListener('mouseleave', () => {
-            document.getElementById('left_button').classList.remove('highlight');
-        });
-
-        document.getElementById('right_button').addEventListener('mousedown', () => {
-            sendMoveCommand(1, 0);
-            document.getElementById('right_button').classList.add('highlight');
-        });
-        document.getElementById('right_button').addEventListener('mouseup', () => {
-            document.getElementById('right_button').classList.remove('highlight');
-        });
-        document.getElementById('right_button').addEventListener('mouseleave', () => {
-            document.getElementById('right_button').classList.remove('highlight');
-        });
-
-        function toggleControlMode() {
-        const controlMode = document.getElementById("controlModeToggle").checked ? "automatic" : "manual";
-
-        fetch('/update_control_mode', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ control_mode: controlMode })
-        })
-        .then(response => response.json())
-        .then(data => console.log(`Control mode set to: ${data.control_mode}`))
-        .catch(error => console.error('Error updating control mode:', error));
-    }
     </script>
 </body>
+
 </html>
