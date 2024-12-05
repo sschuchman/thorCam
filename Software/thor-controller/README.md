@@ -39,29 +39,79 @@ This system provides a seamless interface for real-time camera movement, video v
 ## Installation
 
 ### Prerequisites
-- **Raspberry Pi 5**:
-  - Python 3
-  - Required libraries:
-    - Flask
-    - OpenCV (`cv2`)
-    - numpy
-    - picamera2
-    - serial
-  - Install dependencies:
-    ```bash
-    pip install flask opencv-python numpy picamera2 pyserial
-    ```
+#### Raspberry Pi 5
+1. Ensure your Raspberry Pi 5 is running Raspberry Pi OS with Python 3 installed.
+2. Enable the camera interface:
+   ```bash
+   sudo raspi-config
+   ```
+   
+   Navigate to Interface Options > Camera, and enable it. 3. Install required system dependencies:
+ ```bash
+  sudo apt update
+  sudo apt install libcamera-apps libcamera-dev libcap-dev
+```
 
-- **Raspberry Pi Pico**:
-  - Flash the custom firmware onto the Pico using a C development environment like the Pico SDK.
+4. Create a virtual environment for the project:
+```bash
+  python3 -m venv ~/thorcam-venv
+```
 
----
+5. Activate the virtual environment:
+```bash
+  source ~/thorcam-venv/bin/activate
+```
+
+6. Install the Python dependencies:
+```bash
+  pip install flask opencv-python numpy picamera2 pyserial
+```
+
+Raspberry Pi Pico
+- Flash the custom firmware onto the Pico using the Pico SDK or a similar C development environment.
 
 ## Usage
-
 ### Raspberry Pi 5
+
 1. Start the Flask server:
+```bash
+  python app.py
+```
+
+2. Open a web browser and navigate to:
+```bash
+  http://<Raspberry-Pi-IP>:5000
+```
+Replace <Raspberry-Pi-IP> with your Raspberry Pi's IP address.
+
+
+## Troubleshooting
+
+  ModuleNotFoundError: No module named 'libcamera'
+  - Ensure libcamera is installed using:
   ```bash
-    python app.py
+    sudo apt install libcamera-apps libcamera-dev
   ```
-2. Open a web browser and navigate to http://<Raspberry-Pi-IP>:5000
+
+  - Verify the camera interface is enabled:
+  ```bash
+    sudo raspi-config
+  ```
+  Navigate to Interface Options > Camera, and enable it.
+
+Permission Errors with Camera:
+  - Add the user to the video group:
+  ```bash
+    sudo usermod -a -G video $USER
+  ```
+
+Reboot the Raspberry Pi:
+```bash
+    sudo reboot
+```
+
+Dependencies Not Installing in Virtual Environment:
+  - Ensure the virtual environment is activated:
+  ```bash
+    source ~/thorcam-venv/bin/activate
+  ```
