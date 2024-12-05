@@ -1,9 +1,10 @@
+
 # Thor Controller Software
 
 ## Overview
 The **Thor Controller Software** is a dual-component system designed to control and monitor the thoracic camera for minimally invasive surgery. The software runs on two devices:
-1. A **Raspberry Pi Pico**, which handles movement commands and sensor data.
-2. A **Raspberry Pi 5**, which serves as the control hub, hosting a web-based user interface and managing computer vision processing and UART communication with the Pico.
+1. **Raspberry Pi Pico**: Handles movement commands and sensor data.
+2. **Raspberry Pi 5**: Serves as the control hub, hosting a web-based user interface and managing computer vision processing and UART communication with the Pico.
 
 This system provides a seamless interface for real-time camera movement, video visualization, and automatic tracking of surgical tools.
 
@@ -45,73 +46,89 @@ This system provides a seamless interface for real-time camera movement, video v
    ```bash
    sudo raspi-config
    ```
-   
-   Navigate to Interface Options > Camera, and enable it. 3. Install required system dependencies:
- ```bash
-  sudo apt update
-  sudo apt install libcamera-apps libcamera-dev libcap-dev
-```
+   Navigate to **Interface Options > Camera** and enable it.
 
-4. Create a virtual environment for the project:
-```bash
-  python3 -m venv ~/thorcam-venv
-```
+3. Install required system dependencies:
+   ```bash
+   sudo apt update
+   sudo apt install -y python3-opencv python3-picamera2 python3-numpy python3-flask python3-serial
+   ```
 
-5. Activate the virtual environment:
-```bash
-  source ~/thorcam-venv/bin/activate
-```
+4. Install additional required libraries:
+   ```bash
+   sudo apt install -y libcamera-apps libcamera-dev
+   ```
 
-6. Install the Python dependencies:
-```bash
-  pip install flask opencv-python numpy picamera2 pyserial
-```
+5. Ensure the user has the appropriate permissions to use the camera:
+   ```bash
+   sudo usermod -a -G video $USER
+   ```
 
-Raspberry Pi Pico
-- Flash the custom firmware onto the Pico using the Pico SDK or a similar C development environment.
+6. Reboot the Raspberry Pi to apply changes:
+   ```bash
+   sudo reboot
+   ```
+
+#### Raspberry Pi Pico
+1. Flash the custom firmware onto the Pico using the Pico SDK or any C development environment.
+2. Ensure the Pico is connected to the Raspberry Pi 5 via UART for communication.
+
+---
 
 ## Usage
+
 ### Raspberry Pi 5
+1. Clone this repository to your Raspberry Pi 5:
+   ```bash
+   git clone <repository_url>
+   cd <repository_directory>
+   ```
 
-1. Start the Flask server:
-```bash
-  python app.py
-```
+2. Start the Flask server:
+   ```bash
+   python3 app.py
+   ```
 
-2. Open a web browser and navigate to:
-```bash
-  http://<Raspberry-Pi-IP>:5000
-```
-Replace <Raspberry-Pi-IP> with your Raspberry Pi's IP address.
+3. Open a web browser and navigate to:
+   ```bash
+   http://<Raspberry-Pi-IP>:5000
+   ```
+   Replace `<Raspberry-Pi-IP>` with your Raspberry Pi's IP address.
 
+---
 
 ## Troubleshooting
 
-  ModuleNotFoundError: No module named 'libcamera'
-  - Ensure libcamera is installed using:
+### ModuleNotFoundError: No module named 'libcamera'
+- Ensure `libcamera` is installed using:
   ```bash
-    sudo apt install libcamera-apps libcamera-dev
+  sudo apt install -y libcamera-apps libcamera-dev
+  ```
+- Verify the camera interface is enabled:
+  ```bash
+  sudo raspi-config
+  ```
+  Navigate to **Interface Options > Camera** and enable it.
+
+### Permission Errors with Camera
+- Add the user to the `video` group:
+  ```bash
+  sudo usermod -a -G video $USER
+  ```
+- Reboot the Raspberry Pi:
+  ```bash
+  sudo reboot
   ```
 
-  - Verify the camera interface is enabled:
-  ```bash
-    sudo raspi-config
-  ```
-  Navigate to Interface Options > Camera, and enable it.
-
-Permission Errors with Camera:
-  - Add the user to the video group:
-  ```bash
-    sudo usermod -a -G video $USER
-  ```
-
-Reboot the Raspberry Pi:
+### Dependencies Not Installed
+If you encounter dependency installation errors, ensure that you run:
 ```bash
-    sudo reboot
+sudo apt update
+sudo apt install -y python3-opencv python3-picamera2 python3-numpy python3-flask python3-serial
 ```
 
-Dependencies Not Installing in Virtual Environment:
-  - Ensure the virtual environment is activated:
-  ```bash
-    source ~/thorcam-venv/bin/activate
-  ```
+---
+
+## Notes
+- For smoother operation, ensure the Raspberry Pi is connected to a stable network.
+- Regularly check for updates to the dependencies using `sudo apt update && sudo apt upgrade`.
