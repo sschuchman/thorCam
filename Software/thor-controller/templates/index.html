@@ -197,11 +197,11 @@
         border-radius: 50%;
     }
 
-    input:checked + .slider {
+    input:checked+.slider {
         background-color: #007bff;
     }
 
-    input:checked + .slider:before {
+    input:checked+.slider:before {
         transform: translateX(30px);
     }
 
@@ -302,7 +302,14 @@
             controlMode = document.getElementById("controlModeToggle").checked ? "Auto" : "Manual";
             document.getElementById("controlModeText").textContent = controlMode;
 
-            // Enable or disable buttons based on control mode
+            // Send the control mode to the server
+            fetch('/update_control_mode', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ control_mode: controlMode.toLowerCase() }) // Send "auto" or "manual"
+            }).catch(console.error);
+
+            // Enable or disable movement buttons
             document.querySelectorAll('.buttons-container button').forEach(button => {
                 if (controlMode === "Manual") {
                     button.classList.remove('disabled');
@@ -313,6 +320,7 @@
                 }
             });
         }
+
 
         // Animate button presses
         const keyMap = {
@@ -340,9 +348,9 @@
         function getMovementFromKey(key) {
             switch (key) {
                 case 'w': return [0, 1];
-                case 'a': return [-1, 0];
+                case 'a': return [1, 0];
                 case 's': return [0, -1];
-                case 'd': return [1, 0];
+                case 'd': return [-1, 0];
             }
         }
 

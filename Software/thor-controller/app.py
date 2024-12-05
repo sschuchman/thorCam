@@ -11,7 +11,8 @@ app = Flask(__name__)
 
 # Initialize Picamera2 with high resolution for live feed
 picam2 = Picamera2()
-video_config = picam2.create_video_configuration(main={"size": (1920, 1080), "format": "RGB888"})
+video_config = picam2.create_video_configuration(
+    main={"size": (1920, 1080), "format": "RGB888"})
 video_config['controls'] = {"FrameRate": 30}
 picam2.configure(video_config)
 picam2.start()
@@ -45,7 +46,8 @@ color_ranges = {
     "green": ([50, 100, 100], [70, 255, 255]),
     "blue": ([100, 100, 100], [130, 255, 255])
 }
-lower_hue, upper_hue = color_ranges[selected_color][0][0], color_ranges[selected_color][1][0]  # Default slider values
+# Default slider values
+lower_hue, upper_hue = color_ranges[selected_color][0][0], color_ranges[selected_color][1][0]
 
 control_mode = "manual"  # Default control mode is manual
 threshold = 10  # Threshold for dx and dy for automatic control
@@ -100,14 +102,17 @@ def generate_video_feed():
         spf = elapsed_time / video_frame_count if video_frame_count > 0 else 0
 
         # Display FPS and SPF in the top right corner
-        cv2.putText(frame, f"FPS: {fps:.2f}", (1675, 45), cv2.FONT_HERSHEY_SIMPLEX, 1.5, (255, 255, 255), 2)
+        cv2.putText(frame, f"FPS: {fps:.2f}", (1675, 45),
+                    cv2.FONT_HERSHEY_SIMPLEX, 1.5, (255, 255, 255), 2)
         # cv2.putText(frame, f"SPF: {spf:.4f}s", (1500, 100), cv2.FONT_HERSHEY_SIMPLEX, 1.5, (255, 255, 255), 2)
 
         # Slightly reduce the JPEG quality to increase frame rate
-        ret, buffer = cv2.imencode('.jpg', frame, [cv2.IMWRITE_JPEG_QUALITY, 60])
+        ret, buffer = cv2.imencode(
+            '.jpg', frame, [cv2.IMWRITE_JPEG_QUALITY, 60])
         if ret:
             yield (b'--frame\r\n'
                    b'Content-Type: image/jpeg\r\n\r\n' + buffer.tobytes() + b'\r\n')
+
 
 @app.route('/video_feed')
 def video_feed():
@@ -124,7 +129,8 @@ def generate_mask_feed():
         frame = picam2.capture_array()
         small_frame = cv2.resize(frame, MASK_RESOLUTION)
         hsv_frame = cv2.cvtColor(small_frame, cv2.COLOR_RGB2HSV)
-        hsv_frame[:, :, 2] = np.clip(hsv_frame[:, :, 2] + brightness_increase, 0, 255)
+        hsv_frame[:, :, 2] = np.clip(
+            hsv_frame[:, :, 2] + brightness_increase, 0, 255)
 
         lower_bound = np.array([lower_hue, 100, 100])
         upper_bound = np.array([upper_hue, 255, 255])
@@ -135,26 +141,37 @@ def generate_mask_feed():
 
         mask_colored = cv2.cvtColor(mask, cv2.COLOR_GRAY2BGR)
 
-        contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        contours, _ = cv2.findContours(
+            mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
         if contours:
             largest_contour = max(contours, key=cv2.contourArea)
             if cv2.contourArea(largest_contour) > MIN_CONTOUR_AREA:
                 x, y, w, h = cv2.boundingRect(largest_contour)
                 object_center = (x + w // 2, y + h // 2)
 
-                screen_center = (MASK_RESOLUTION[0] // 2, MASK_RESOLUTION[1] // 2)
+                screen_center = (
+                    MASK_RESOLUTION[0] // 2, MASK_RESOLUTION[1] // 2)
                 dx = object_center[0] - screen_center[0]
                 dy = -(object_center[1] - screen_center[1])
                 distance = int(math.sqrt(dx ** 2 + dy ** 2))
 
-                cv2.rectangle(mask_colored, (x, y), (x + w, y + h), (0, 255, 255), 2)
-                cv2.line(mask_colored, screen_center, object_center, (255, 0, 0), 2)
+                cv2.rectangle(mask_colored, (x, y),
+                              (x + w, y + h), (0, 255, 255), 2)
+                cv2.line(mask_colored, screen_center,
+                         object_center, (255, 0, 0), 2)
 
-                cv2.putText(mask_colored, f"Distance: {distance}", (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 2)
-                cv2.putText(mask_colored, f"dx: {dx}", (10, 60), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 2)
-                cv2.putText(mask_colored, f"dy: {dy}", (10, 90), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 2)
+                cv2.putText(mask_colored, f"Distance: {distance}", (
+                    10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 2)
+                cv2.putText(
+                    mask_colored, f"dx: {dx}", (10, 60), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 2)
+                cv2.putText(
+                    mask_colored, f"dy: {dy}", (10, 90), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 2)
+                
+                # Print the control mode
+                # cv2.putText(mask_colored, f"Control Mode: {control_mode}", (10, 120),
+                #             cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 2)
 
-                if control_mode == "automatic":
+                if control_mode == "auto":
                     x_command = -(1 if dx > threshold else -1 if dx < -threshold else 0)
                     y_command = 1 if dy > threshold else -1 if dy < -threshold else 0
 
@@ -168,10 +185,12 @@ def generate_mask_feed():
         mask_fps = mask_frame_count / elapsed_time if elapsed_time > 0 else 0
         mask_spf = elapsed_time / mask_frame_count if mask_frame_count > 0 else 0
 
-        cv2.putText(mask_colored, f"FPS: {mask_fps:.2f}", (220, 20), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 2)
+        cv2.putText(mask_colored, f"FPS: {mask_fps:.2f}", (220, 20),
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 2)
         # cv2.putText(mask_colored, f"SPF: {mask_spf:.4f}s", (200, 60), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 2)
 
-        ret, buffer = cv2.imencode('.jpg', mask_colored, [cv2.IMWRITE_JPEG_QUALITY, 50])
+        ret, buffer = cv2.imencode('.jpg', mask_colored, [
+                                   cv2.IMWRITE_JPEG_QUALITY, 50])
         if ret:
             yield (b'--frame\r\n'
                    b'Content-Type: image/jpeg\r\n\r\n' + buffer.tobytes() + b'\r\n')
@@ -187,24 +206,8 @@ def get_sensor_values():
     """Endpoint to retrieve the sensor values."""
     global sensor_values
     with data_lock:  # Lock access to shared resources
-        return jsonify(sensor_values=sensor_values)  # Properly return sensor values as JSON
-
-
-@app.route('/update_brightness', methods=['POST'])
-def update_brightness():
-    global brightness_increase
-    data = request.json
-    brightness_increase = int(data['brightness'])
-    return jsonify(success=True)
-
-
-@app.route('/update_color', methods=['POST'])
-def update_color():
-    global selected_color, lower_hue, upper_hue
-    data = request.json
-    selected_color = data['color']
-    lower_hue, upper_hue = color_ranges[selected_color][0][0], color_ranges[selected_color][1][0]
-    return jsonify(success=True, lower_hue=lower_hue, upper_hue=upper_hue)
+        # Properly return sensor values as JSON
+        return jsonify(sensor_values=sensor_values)
 
 
 @app.route('/update_range', methods=['POST'])
@@ -225,11 +228,6 @@ def update_range():
         upper_hue = min(180, upper_hue + threshold)
     return jsonify(success=True)
 
-@app.route('/log_feed')
-def log_feed():
-    """Returns the log data as plain text."""
-    with data_lock:
-        return "\n".join(log_data), 200, {'Content-Type': 'text/plain'}
 
 @app.route('/move', methods=['POST'])
 def move():
@@ -247,17 +245,18 @@ def move():
         print(f"Sent command: {command.strip()}")
         return jsonify(success=True, action=command.strip())
     else:
-        print(f"UART not initialized. Failed to send command: {command.strip()}")
+        print(
+            f"UART not initialized. Failed to send command: {command.strip()}")
         return jsonify(success=False, error="UART not initialized.")
-    
-    
+
+
 @app.route('/update_control_mode', methods=['POST'])
 def update_control_mode():
     global control_mode
-    data = request.json
-    control_mode = data.get('control_mode', 'manual')
+    data = request.json  # Parse JSON data from request
+    control_mode = data.get('control_mode', 'manual')  # Default to "manual" if not provided
+    print(f"Updated control_mode to: {control_mode}")  # Debugging
     return jsonify(success=True, control_mode=control_mode)
-
 
 
 if __name__ == '__main__':
