@@ -100,8 +100,8 @@ def generate_video_feed():
         spf = elapsed_time / video_frame_count if video_frame_count > 0 else 0
 
         # Display FPS and SPF in the top right corner
-        cv2.putText(frame, f"FPS: {fps:.2f}", (1500, 50), cv2.FONT_HERSHEY_SIMPLEX, 1.5, (255, 255, 255), 2)
-        cv2.putText(frame, f"SPF: {spf:.4f}s", (1500, 100), cv2.FONT_HERSHEY_SIMPLEX, 1.5, (255, 255, 255), 2)
+        cv2.putText(frame, f"FPS: {fps:.2f}", (1675, 45), cv2.FONT_HERSHEY_SIMPLEX, 1.5, (255, 255, 255), 2)
+        # cv2.putText(frame, f"SPF: {spf:.4f}s", (1500, 100), cv2.FONT_HERSHEY_SIMPLEX, 1.5, (255, 255, 255), 2)
 
         # Slightly reduce the JPEG quality to increase frame rate
         ret, buffer = cv2.imencode('.jpg', frame, [cv2.IMWRITE_JPEG_QUALITY, 60])
@@ -168,8 +168,8 @@ def generate_mask_feed():
         mask_fps = mask_frame_count / elapsed_time if elapsed_time > 0 else 0
         mask_spf = elapsed_time / mask_frame_count if mask_frame_count > 0 else 0
 
-        cv2.putText(mask_colored, f"FPS: {mask_fps:.2f}", (200, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 2)
-        cv2.putText(mask_colored, f"SPF: {mask_spf:.4f}s", (200, 60), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 2)
+        cv2.putText(mask_colored, f"FPS: {mask_fps:.2f}", (220, 20), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 2)
+        # cv2.putText(mask_colored, f"SPF: {mask_spf:.4f}s", (200, 60), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 2)
 
         ret, buffer = cv2.imencode('.jpg', mask_colored, [cv2.IMWRITE_JPEG_QUALITY, 50])
         if ret:
