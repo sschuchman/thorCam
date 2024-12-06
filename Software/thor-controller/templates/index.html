@@ -233,6 +233,74 @@
         width: 100%;
         height: 100%;
     }
+
+    .toggle-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 15px;
+    }
+
+    .auto-mode-container {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .demo-mode-container {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .toggle-label {
+        font-size: 1rem;
+        color: #e0e0e0;
+    }
+
+    .slider-switch {
+        position: relative;
+        width: 60px;
+        height: 30px;
+    }
+
+    .slider-switch input {
+        opacity: 0;
+        width: 0;
+        height: 0;
+    }
+
+    .slider {
+        position: absolute;
+        cursor: pointer;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: #333;
+        transition: 0.4s;
+        border-radius: 30px;
+    }
+
+    .slider:before {
+        position: absolute;
+        content: "";
+        height: 22px;
+        width: 22px;
+        left: 4px;
+        bottom: 4px;
+        background-color: #fff;
+        transition: 0.4s;
+        border-radius: 50%;
+    }
+
+    input:checked+.slider {
+        background-color: #007bff;
+    }
+
+    input:checked+.slider:before {
+        transform: translateX(30px);
+    }
 </style>
 
 <body>
@@ -262,11 +330,20 @@
                     </div>
                 </div>
                 <div class="toggle-container">
-                    <p id="controlModeText" class="toggle-label">Auto</p>
-                    <label class="slider-switch">
-                        <input type="checkbox" id="controlModeToggle" onchange="toggleControlMode()">
-                        <span class="slider"></span>
-                    </label>
+                    <div class="auto-mode-container">
+                        <p id="controlModeText" class="toggle-label">Auto</p>
+                        <label class="slider-switch">
+                            <input type="checkbox" id="controlModeToggle" onchange="toggleControlMode()">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                    <div class="demo-mode-container">
+                        <label class="toggle-label" for="demoModeToggle">Demo Mode</label>
+                        <label class="slider-switch">
+                            <input type="checkbox" id="demoModeToggle" onchange="toggleDemoMode()">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
                 </div>
             </div>
         </div>
@@ -282,7 +359,10 @@
     </div>
 
     <script>
-        let controlMode = "Auto";
+        let controlMode = "Manual";
+        let demoMode = false;
+        let demoInterval;
+        let demoTimeout;
 
         function manualControl(x, y) {
             if (controlMode === "Manual") {
@@ -299,6 +379,8 @@
         }
 
         function toggleControlMode() {
+            if (demoMode) return; // Prevent toggling if demo mode is active
+
             controlMode = document.getElementById("controlModeToggle").checked ? "Auto" : "Manual";
             document.getElementById("controlModeText").textContent = controlMode;
 
@@ -321,8 +403,75 @@
             });
         }
 
+        function toggleDemoMode() {
+            demoMode = !demoMode;
+            const controlModeToggle = document.getElementById('controlModeToggle');
+            const manualControls = document.querySelectorAll('.buttons-container button');
 
-        // Animate button presses
+            if (demoMode) {
+                controlMode = "Manual";
+                document.getElementById("controlModeText").textContent = controlMode;
+                controlModeToggle.checked = false; // Set auto mode switch to manual
+                controlModeToggle.disabled = true; // Disable auto mode switch
+                controlModeToggle.classList.add('disabled'); // Add visual disabled class
+                manualControls.forEach(button => button.disabled = true); // Disable manual controls
+                startDemoMode();
+                updateControlMode('manual'); // Inform backend that manual mode is enabled
+            } else {
+                controlModeToggle.disabled = false; // Enable auto mode switch
+                controlModeToggle.classList.remove('disabled'); // Remove visual disabled class
+                manualControls.forEach(button => button.disabled = false); // Enable manual controls
+                stopDemoMode();
+                clearButtonAnimations();
+            }
+        }
+
+        function startDemoMode() {
+            const directions = [
+                { x: 1, y: 0 },  // Right
+                { x: 0, y: 1 },  // Down
+                { x: -1, y: 0 }, // Left
+                { x: 0, y: -1 }  // Up
+            ];
+            let index = 0;
+
+            function sendDirection() {
+                const direction = directions[index];
+                animateButton(direction.x, direction.y, true); // Start animation
+                demoInterval = setInterval(() => {
+                    sendMoveCommand(direction.x, direction.y);
+                }, 20); // Send command every 20ms
+
+                demoTimeout = setTimeout(() => {
+                    clearInterval(demoInterval);
+                    animateButton(direction.x, direction.y, false); // Stop animation
+                    index = (index + 1) % directions.length;
+                    sendDirection();
+                }, 6000); // Change direction every 6 seconds
+            }
+
+            sendDirection();
+        }
+
+        function stopDemoMode() {
+            clearInterval(demoInterval);
+            clearTimeout(demoTimeout);
+        }
+
+        function updateControlMode(mode) {
+            fetch('/update_control_mode', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ control_mode: mode }),
+            })
+                .then(response => response.json())
+                .then(data => console.log(data))
+                .catch(error => console.error('Error:', error));
+        }
+
+        // Existing code for handling key presses and chart updates
         const keyMap = {
             w: 'up_button',
             a: 'left_button',
@@ -355,6 +504,49 @@
         }
 
         document.addEventListener('DOMContentLoaded', function () {
+            // Set initial state to manual mode and demo mode off
+            document.getElementById("controlModeText").textContent = "Manual";
+            document.getElementById("controlModeToggle").checked = false;
+            document.getElementById("demoModeToggle").checked = false;
+
+            // Enable manual controls
+            const manualControls = document.querySelectorAll('.buttons-container button');
+            manualControls.forEach(button => {
+                button.disabled = false;
+                button.classList.remove('disabled');
+            });
+
+            // Ensure auto mode toggle is enabled and not locked
+            const controlModeToggle = document.getElementById('controlModeToggle');
+            controlModeToggle.disabled = false;
+            controlModeToggle.classList.remove('disabled');
+
+            // Custom Plugin for Dashed Line Legend Labels
+            const dashedLineLegendPlugin = {
+                id: 'dashedLineLegendPlugin',
+                beforeDraw(chart, args, options) {
+                    const { ctx, legend } = chart;
+                    const legendItems = legend.legendItems;
+
+                    // Add custom legend labels for dashed lines
+                    legendItems.push({
+                        text: 'Lower Threshold',
+                        strokeStyle: 'red',
+                        fillStyle: 'rgba(255, 0, 0, 0)',
+                        lineDash: [5, 5],
+                        hidden: false
+                    });
+                    legendItems.push({
+                        text: 'Upper Threshold',
+                        strokeStyle: 'green',
+                        fillStyle: 'rgba(0, 255, 0, 0)',
+                        lineDash: [5, 5],
+                        hidden: false
+                    });
+                }
+            };
+
+            // Initialize the sensor chart
             const ctx = document.getElementById('sensorBarChart').getContext('2d');
             const sensorBarChart = new Chart(ctx, {
                 type: 'bar',
@@ -362,22 +554,33 @@
                     labels: ['Load 1', 'Load 2', 'Load 3', 'Load 4'],
                     datasets: [{
                         label: 'Tension',
-                        data: [0, 0, 0, 0],
+                        data: [0, 0, 0, 0], // Initial data
                         backgroundColor: ['rgba(255, 99, 132, 0.2)', 'rgba(54, 162, 235, 0.2)', 'rgba(255, 206, 86, 0.2)', 'rgba(75, 192, 192, 0.2)'],
                         borderColor: ['rgba(255, 99, 132, 1)', 'rgba(54, 162, 235, 1)', 'rgba(255, 206, 86, 1)', 'rgba(75, 192, 192, 1)'],
                         borderWidth: 1
                     }]
                 },
                 options: {
+                    responsive: true,
                     scales: {
                         y: {
                             beginAtZero: true,
                             max: 300
                         }
+                    },
+                    plugins: {
+                        legend: {
+                            labels: {
+                                color: '#e0e0e0',
+                                boxWidth: 10
+                            }
+                        }
                     }
-                }
+                },
+                plugins: [horizontalLinePlugin, dashedLineLegendPlugin] // Include plugins
             });
 
+            // Fetch and update sensor data every 100ms
             setInterval(() => {
                 fetch('/sensor_values')
                     .then(response => response.json())
@@ -387,6 +590,66 @@
                     });
             }, 100);
         });
+
+
+        function animateButton(x, y, start) {
+            let buttonId;
+            if (x === -1 && y === 0) buttonId = 'right_button';
+            else if (x === 1 && y === 0) buttonId = 'left_button';
+            else if (x === 0 && y === 1) buttonId = 'up_button';
+            else if (x === 0 && y === -1) buttonId = 'down_button';
+
+            if (buttonId) {
+                const button = document.getElementById(buttonId);
+                if (start) {
+                    button.classList.add('pressed');
+                } else {
+                    button.classList.remove('pressed');
+                }
+            }
+        }
+
+        const horizontalLinePlugin = {
+            id: 'horizontalLinePlugin',
+            afterDraw: function (chart) {
+                const ctx = chart.ctx;
+                const yScale = chart.scales['y'];
+                const chartArea = chart.chartArea;
+
+                // Draw lower threshold line
+                ctx.save();
+                ctx.beginPath();
+                ctx.setLineDash([5, 5]); // Set dashed line pattern
+                ctx.moveTo(chartArea.left, yScale.getPixelForValue(10));
+                ctx.lineTo(chartArea.right, yScale.getPixelForValue(10));
+                ctx.strokeStyle = 'red';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+                ctx.fillStyle = 'red';
+                ctx.textAlign = 'right';
+                // ctx.fillText('Lower Threshold', chartArea.right + 10, yScale.getPixelForValue(10) + 3);
+                ctx.restore();
+
+                // Draw upper threshold line
+                ctx.save();
+                ctx.beginPath();
+                ctx.setLineDash([5, 5]); // Set dashed line pattern
+                ctx.moveTo(chartArea.left, yScale.getPixelForValue(250));
+                ctx.lineTo(chartArea.right, yScale.getPixelForValue(250));
+                ctx.strokeStyle = 'green';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+                ctx.fillStyle = 'green';
+                ctx.textAlign = 'right';
+                // ctx.fillText('Upper Threshold', chartArea.right + 10, yScale.getPixelForValue(250) + 3);
+                ctx.restore();
+            }
+        };
+
+        function clearButtonAnimations() {
+            const buttons = document.querySelectorAll('.buttons-container button');
+            buttons.forEach(button => button.classList.remove('pressed'));
+        }
     </script>
 </body>
 
