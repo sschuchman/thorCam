@@ -36,3 +36,11 @@ Hardware/ThorPCB.zip
 
 Hardware/production/backups/
 
+# Exclude the LaTeX junk files
+Report/*.aux
+Report/*.fdb_latexmk
+Report/*.fls
+Report/*.log
+Report/*.out
+Report/*.synctex.gz
+Report/*.toc
