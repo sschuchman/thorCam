@@ -1,0 +1,11 @@
+// Workspace settings
+{
+    // The following will hide latex files that I don't care for
+    "files.exclude": {
+        "**/*.aux": true,
+        "**/*.fdb_latexmk": true,
+        "**/*.fls": true,
+        "**/*.synctex.gz": true,
+        "**/*.log": true
+    }
+}
