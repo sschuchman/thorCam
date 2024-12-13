@@ -96,8 +96,16 @@ Additionally, the camera system eliminates the need for external motors or bulky
 \subsection{Hardware Design}
 
 \subsubsection{Custom PCB Design}
+The custom PCB for the thoracic camera system is a crucial component that integrates and organizes all hardware modules for efficient operation.
 
-The custom PCB for the thoracic camera system is a crucial component that integrates and organizes all hardware modules for efficient operation. It is designed to accommodate the following features and functionalities:
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{images/BoardView.png}
+    \caption{Board View of the PCB}
+    \label{fig:BoardView}
+\end{figure}
+
+It is designed to accommodate the following features and functionalities:
 
 \begin{itemize}
     \item \textbf{Mounting and Routing:} The PCB includes dedicated mounting holes and routing paths for the \textbf{Raspberry Pi Pico}, \textbf{ADS1115 ADC modules}, and \textbf{L293D Stepper Drivers}. These components are strategically placed to ensure minimal signal interference and efficient power distribution.
@@ -145,6 +153,13 @@ The Raspberry Pi Pico functions as the dedicated hardware controller for the sys
     \item \textbf{Multicore Processing:} Utilizes the dual-core architecture to manage motor control and sensor data independently, ensuring smooth and efficient operation.
 \end{itemize}
 
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{images/Pico.png}
+    \caption{Raspberry Pi Pico Schematic}
+    \label{fig:Pico}
+\end{figure}
+
 \subsubsection{L293D Stepper Drivers}
 The L293D motor drivers are used to control the NEMA 17 stepper motors. Key features include:
 \begin{itemize}
@@ -161,6 +176,13 @@ The system employs four NEMA 17 stepper motors to actuate the tension wires. The
     \item \textbf{Reliable Operation:} Provides consistent performance under variable loads.
 \end{itemize}
 
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{images/Stepper.png}
+    \caption{NEMA 17 Stepper Driver Schematic}
+    \label{fig:Stepper}
+\end{figure}
+
 \subsubsection{ADS1115 ADC Modules}
 The ADS1115 ADC modules interface with the load cells to provide high-precision tension data. Features include:
 \begin{itemize}
@@ -176,6 +198,13 @@ The load cells provide critical feedback on the tension applied to the wires. Fe
     \item \textbf{High Precision:} Connected to ADS1115 ADC modules to measure minute changes in tension.
     \item \textbf{Robust Design:} Mounted securely on the custom PCB to minimize noise and maintain stability.
 \end{itemize}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{images/ADC.png}
+    \caption{Loadcell ADC Schematic}
+    \label{fig:ADC}
+\end{figure}
 
 
 This hardware design, with its carefully selected components and custom PCB, ensures the system operates reliably and efficiently under the demands of thoracic surgery. Each module is integrated seamlessly to provide surgeons with precise control and a clear visualization of the surgical field.
