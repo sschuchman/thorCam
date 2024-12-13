@@ -53,8 +53,6 @@ As shown in Figure~\ref{fig:level1}, the Level 1 block diagram details the opera
 The integration of these components ensures smooth, responsive, and precise camera movements. The \textbf{Raspberry Pi 5} and \textbf{Pi Pico} communicate via a UART connection, allowing for continuous feedback and command transmission. This seamless interaction between hardware and software provides surgeons with a reliable, intuitive visualization tool for thoracic surgeries, adaptable for both manual and automatic modes.
 
 
-
-
 \subsection{Physical Design}
 \subsubsection{Tension Control Module}
 The tension control module is responsible for accurately adjusting the position and orientation of the thoracic camera by controlling the tension in four wires connected to the camera. Each module is equipped with a NEMA 17 stepper motor, located at the bottom of the unit, which drives a spool to regulate the tension in the wire. This setup allows for precise control of the camera's movement, crucial for the dynamic visualization required in thoracic surgeries.
@@ -63,7 +61,7 @@ For tension monitoring, each module uses a 1kg load cell, which is centrally pos
 
 In terms of physical size, the tension control module, as shown in the attached schematic, is compact yet robust. The overall dimensions are approximately 12.7mm wide by 80mm tall, with a depth of 12.7mm. The wire feeds out from the top of the module through a guiding tube, ensuring that the wire moves smoothly as tension is adjusted. This small form factor makes the system suitable for tight surgical environments, where space is a premium, while still providing the necessary functionality to support the thoracic camera.
 
-\includepdf[pages=-]{docs/Module_Rack.pdf}
+\includepdf[pages=-]{docs/Tension_Module_v3.pdf}
 
 \subsection{Tension Module Rack}
 The tension module rack is designed to hold and align the four tension control modules, ensuring they function precisely and consistently during operation. Each module is mounted within the rack, and the rack's dimensions and construction are carefully optimized for stability and ease of assembly. 
@@ -209,6 +207,7 @@ The load cells provide critical feedback on the tension applied to the wires. Fe
 
 This hardware design, with its carefully selected components and custom PCB, ensures the system operates reliably and efficiently under the demands of thoracic surgery. Each module is integrated seamlessly to provide surgeons with precise control and a clear visualization of the surgical field.
 
+\newpage
 \subsection{Firmware and Software Design}
 
 The firmware and software design work in unison to deliver a seamless and efficient control system for the thoracic camera. Both the firmware running on the Raspberry Pi Pico and the software hosted on the Raspberry Pi 5 are tailored to achieve precise camera control, real-time feedback, and user interaction. The integration of these two components enables the system to provide reliable performance under the demands of surgical applications. The high-level architecture of this integration is illustrated in Figure~\ref{fig:software_flowchart}.
@@ -264,15 +263,33 @@ Together, the system achieves near-instantaneous feedback and control with key p
     \item \textbf{Transmission Latency:} $<$20 ms
 \end{itemize}
 
+
+\newpage
 \section{Final Schedule}
+
 \begin{tabular}{|l|l|l|}
     \hline
-    Task & Responsible Party & Completion Date \\ \hline
-    Physical Design Prototyping & All Contributors & September 2024 \\ \hline
-    Hardware Assembly & Jakob Schoeberle & October 2024 \\ \hline
-    Software Development & Sean Schuchman & November 2024 \\ \hline
-    System Integration and Testing & All Contributors & December 2024 \\ \hline
+    \textbf{Task} & \textbf{Responsible Party} & \textbf{Completion Date} \\ \hline
+    Physical Design Prototyping & Sean Schuchman & August 2024 \\ \hline
+    Initial Firmware and Electrical Design & Sean Schuchman, Colton Wall & September 2024 \\ \hline
+    Circuit Breadboarding and Iteration & All Contributors & October 2024 \\ \hline
+    Firmware and PCB Design & Sean Schuchman, Jakob Schoeberle & November 2024 \\ \hline
+    Final Assembly, UI Development, and Tuning & All Contributors & December 2024 \\ \hline
 \end{tabular}
+
+\vspace{0.5cm}
+
+The final schedule, shown above, highlights five distinct stages of development. 
+
+The first stage focused on physical prototyping, which was completed by the end of August 2024. This early completion allowed us to shift our focus to the second stage, which involved initial iterations of firmware and electrical design. During September 2024, we developed and tested the basic firmware and initial electrical circuits to validate the project's core functionality.
+
+The third stage involved breadboard prototyping with the Raspberry Pi Pico, stepper drivers, and ADC modules. During this phase, we explored several iterations of the circuit design, testing different parts and strategies to optimize the system. By the end of October 2024, we finalized the circuit design and began prototyping basic firmware to support our selected components.
+
+In the fourth stage, after committing to the finalized circuit design and chosen components, we focused heavily on PCB design to ensure it could be ordered in time. Concurrently, the software and firmware were further developed, with significant progress made by early November 2024.
+
+By late November, the PCB was completed, and all physical and electrical components were assembled and fully integrated. The final stage involved polishing the system, refining the software controller UI, and tuning the machine for optimal performance. During the last week, we focused on preparing our presentation and ensuring the system met all expectations for functionality and reliability.
+
+
 
 \section{Distribution of Effort}
 \begin{tabular}{|l|l|}
@@ -280,7 +297,7 @@ Together, the system achieves near-instantaneous feedback and control with key p
     Contributor & Area of Contribution \\ \hline
     Sean Schuchman & 3D Modeling, Manufacturing, Software/Firmware Design, Prototyping \\ \hline
     Jakob Schoeberle & Circuit Design, PCB Design, PCB Assembly \\ \hline
-    Colton Wall & Research, Hardware Assembly, System Integration \\ \hline
+    Colton Wall & Circuit Design, Research, Hardware Assembly, System Integration \\ \hline
 \end{tabular}
 
 \section{Possible Future Work}
@@ -306,9 +323,16 @@ The thoracic camera system has demonstrated its potential as a reliable surgical
 
 These advancements would not only improve the overall functionality and performance of the system but also increase its adaptability for diverse surgical applications, bringing it closer to practical deployment in clinical settings.
 
-
 \section{Conclusion}
-The \textbf{Thoracic Camera Project} successfully demonstrates a novel solution for improving visibility and precision in thoracic surgeries. By leveraging advanced hardware and software integration, the system offers a minimally invasive alternative to traditional methods. While challenges remain in miniaturization and clinical testing, the project's results showcase the potential for transformative improvements in surgical outcomes.
+
+The \textbf{Thoracic Camera Project} represents a well-executed and practical approach to improving visibility and precision in thoracic surgeries. By integrating hardware and software components effectively, the system provides a minimally invasive alternative to traditional methods, which often involve rib removal and extended recovery times. The project successfully demonstrated precise, real-time actuation using tension-controlled wires and object tracking, offering surgeons a clear and stable view of the surgical field.
+
+Each phase of the project contributed to its success, from physical prototyping and electrical design to firmware development and software integration. The prototype leverages the Raspberry Pi 5 for video processing, the Raspberry Pi Pico for tension control, custom PCBs for efficient hardware organization, and a user-friendly interface for seamless operation. The modular and well-documented design lays a solid foundation for future iterations and improvements.
+
+While the project met its core objectives, challenges such as miniaturization and clinical validation remain. Future work could focus on refining the system's size for broader surgical applications, incorporating AI-based tracking for enhanced precision, and ensuring the use of medical-grade materials for compliance and durability. These refinements would help align the system with real-world surgical needs.
+
+Overall, the Thoracic Camera Project achieved its goals and demonstrated the feasibility of an integrated system for minimally invasive surgeries. With further development and testing, the design has the potential to serve as a reliable and effective tool, contributing to incremental improvements in surgical techniques and outcomes.
+
 
 \vspace{0.5cm}
 \noindent
